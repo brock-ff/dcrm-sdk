@@ -253,11 +253,11 @@ func (t *udp) findgroup(gid, toid NodeID, toaddr *net.UDPAddr, target NodeID, p2
 		//log.Debug("findgroup", "reply", reply, "r", r)
 		for _, rn := range reply.Nodes {
 			nreceived++
-			n, _ := t.nodeFromRPC(toaddr, rn)
-			//if err != nil {
-			//	log.Trace("Invalid neighbor node received", "ip", rn.IP, "addr", toaddr, "err", err)
-			//	continue
-			//}
+			n, err := t.nodeFromRPC(toaddr, rn)
+			if err != nil {
+				fmt.Printf("Invalid neighbor node received, ip: %v, addr: %v, err: %v\n", rn.IP, toaddr, err)
+				continue
+			}
 			nodes = append(nodes, n)
 		}
 		//log.Debug("findgroup", "return nodes", nodes)
@@ -618,11 +618,26 @@ func updateGroupSDK(n *Node) {
 	}
 }
 
-func checkNodeExist(n *Node) bool {
+func checkNodeIDExist(n *Node) bool {
+	groupTmp := SDK_groupList[n.ID]
+	for _, node := range groupTmp.Nodes {
+		if node.ID == n.ID {
+			ipa := &net.UDPAddr{IP: node.IP, Port: int(node.UDP)}
+			err := Table4group.net.ping(node.ID, ipa)
+			if err == nil {
+				return true
+			}
+			break
+		}
+	}
+	return false
+}
+
+func checkSDKNodeExist(n *Node) bool {
 	for i, node := range groupSDKList {
 		nrpc := nodeToRPC(node)
 		if nrpc.ID == n.ID {
-			fmt.Printf("checkNodeExist, update groupSDKList[%v] (%v -> %v)\n", i, groupSDKList[i], n)
+			fmt.Printf("checkSDKNodeExist, update groupSDKList[%v] (%v -> %v)\n", i, groupSDKList[i], n)
 			groupSDKList[i] = n
 			return true
 		}
@@ -639,7 +654,7 @@ func setGroupSDK(n *Node, replace string, p2pType int) {
 	groupSDK.Lock()
 	defer groupSDK.Unlock()
 	if replace == "add" {
-		if checkNodeExist(n) {
+		if checkSDKNodeExist(n) {
 			return
 		}
 		//if n.ID.String() == "ead5708649f3fb10343a61249ea8509b3d700f1f51270f13ecf889cdf8dafce5e7eb649df3ee872fb027b5a136e17de73965ec34c46ea8a5553b3e3150a0bf8d" ||
@@ -651,7 +666,12 @@ func setGroupSDK(n *Node, replace string, p2pType int) {
 			if SDK_groupList[n.ID] == nil { // exist group
 				addGroupSDK(n)
 			} else {
-				updateGroupSDK(n)
+				if checkNodeIDExist(n) {
+					return
+				} else {
+					delete(SDK_groupList, n.ID)
+					addGroupSDK(n)
+				}
 			}
 			fmt.Printf("==== setGroupSDK() ====, nodeID: %v, group: %v\n", n.ID, SDK_groupList[n.ID])
 			sendGroupInfo(SDK_groupList[n.ID], p2pType)
@@ -662,6 +682,10 @@ func setGroupSDK(n *Node, replace string, p2pType int) {
 				fmt.Printf("==== setGroupSDK() ====, len(groupSDKList) = %v\n", len(groupSDKList))
 			}
 		}
+	} else {
+		//if SDK_groupList[n.ID] != nil { // exist group
+		//	delete(SDK_groupList, n.ID)
+		//}
 	}
 }
 
