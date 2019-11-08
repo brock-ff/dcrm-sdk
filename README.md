@@ -1,3 +1,15 @@
+# Intro
+DCRM 5.0 is a distributed key generation (used for holding assets) and distributed transaction signature (used for sending assets) module that forms the cornerstone of decentralized value exchange and data access control.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Dr. Pascal Paillier. 
+
+When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the wiki for more infomration.
+
+This SDK allows you to connect to Fusion's sandox direclt in either 1) a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 2) a local configuration where you can set any ownership of nodes in your group. 
+
+This library contains 2 functions:
+1) Distributed key generation which returns the public key (dcrm_genPubkey)
+2) Distributed signing of transactions (dcrm_sign)
+
+# Setting Up
 ## Clone The Repository
 mkdir -p $GOPATH/src/github.com/fsn-dev
 
@@ -15,7 +27,7 @@ make
 
 ./bin/cmd/gdcrm
 
-## JSON RPC API
+# JSON RPC API
 
 Default rpc port: 5559
 
@@ -85,16 +97,16 @@ will print bootnode which use for run node with args --bootnodes
 bootnode key such as enode://16ab118525ec559dde2640b513676b8df7368aac3a80cc5c9d9e8b9c71781c09103fe3e8b5dd17bf245f0c71b891ec4848b142852763ab2146a1e288df15da40@[::]:5550
 
 ##### Run nodes (3 nodes at least)
-INFO: if want reboot node, please wait 1 minute to run node after close node
+INFO: If you want to reboot node, please wait 1 minute to run node after closing the node.
 
-without args:
+Without args:
 
 ./bin/cmd/gdcrm
 
 (default: --nodekey node.key --rpcport 5559 --port 5551 --bootnodes "enode://200cb94957955bfa331ce14b72325c39f3eaa6bcfa962308c967390e5722f6fda0f6080781fde6a025a6280fbf23f38ca454e51a6b75ddbc1f9d57593790545a@47.107.50.83:5550")
 ./bin/cmd/gdcrm --genkey node.key
 
-with args,for example:
+With args:
 
 ./bin/cmd/gdcrm --rpcport 9012 --bootnodes "enode://16ab118525ec559dde2640b513676b8df7368aac3a80cc5c9d9e8b9c71781c09103fe3e8b5dd17bf245f0c71b891ec4848b142852763ab2146a1e288df15da40@192.168.1.104:12340" --port 12341 --nodekey "node1.key"
 
