@@ -1,13 +1,15 @@
 # Intro
 DCRM 5.0 is a distributed key generation (used for holding assets) and distributed transaction signature (used for sending assets) module that forms the cornerstone of decentralized value exchange and data access control.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Dr. Pascal Paillier. 
 
-When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the wiki for more infomration.
+When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the [Wiki](https://github.com/fsn-dev/dcrm-sdk/wiki) for more information.
 
-This SDK allows you to connect to Fusion's sandox directly in either 1) a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 2) a local configuration where you can set any ownership of nodes in your group. 
+This SDK allows you to connect to Fusion's sandox directly in either: 
+1. a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 
+2. a local configuration where you can set any ownership of nodes in your group. 
 
 This library contains 2 functions:
-1) Distributed key generation which returns the public key (dcrm_genPubkey)
-2) Distributed signing of transactions (dcrm_sign)
+1. Distributed key generation which returns the public key (dcrm_genPubkey)
+2. Distributed signing of transactions (dcrm_sign)
 
 # Setting Up
 ## Clone The Repository
