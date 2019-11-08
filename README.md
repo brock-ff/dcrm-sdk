@@ -3,7 +3,7 @@ DCRM 5.0 is a distributed key generation (used for holding assets) and distribut
 
 When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the wiki for more infomration.
 
-This SDK allows you to connect to Fusion's sandox direclt in either 1) a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 2) a local configuration where you can set any ownership of nodes in your group. 
+This SDK allows you to connect to Fusion's sandox directly in either 1) a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 2) a local configuration where you can set any ownership of nodes in your group. 
 
 This library contains 2 functions:
 1) Distributed key generation which returns the public key (dcrm_genPubkey)
