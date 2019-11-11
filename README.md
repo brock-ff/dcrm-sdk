@@ -28,8 +28,9 @@ make
 
 ## Run
 
+```
 ./bin/cmd/gdcrm
-
+```
 
 The `gdcrm` will provide two rpc api: `dcrm_genPubkey` and `dcrm_sign`.
 
