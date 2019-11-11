@@ -30,9 +30,13 @@ make
 
 ./bin/cmd/gdcrm
 
+
+The `gdcrm` will provide two rpc api: `dcrm_genPubkey` and `dcrm_sign`.
+
+Default rpc port: 5559.
+
 # JSON RPC API
 
-Default rpc port: 5559
 
 #### dcrm_genPubkey
 
