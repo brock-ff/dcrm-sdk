@@ -279,6 +279,14 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     var sstruct = make(map[string]*lib.ShareStruct)
     for _,v := range shares {
 	mm := strings.Split(v, Sep)
+	//bug
+	if len(mm) < 5 {
+	    fmt.Println("===================!!! KeyGenerate_ec2,fill lib.ShareStruct map error. !!!==================")
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("fill lib.ShareStruct map error.")}
+	    ch <- res
+	    return false
+	}
+	//
 	t,_ := strconv.Atoi(mm[2])
 	ushare := &lib.ShareStruct{T:t,Id:new(big.Int).SetBytes([]byte(mm[3])),Share:new(big.Int).SetBytes([]byte(mm[4]))}
 	prex := mm[0]
