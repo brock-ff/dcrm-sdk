@@ -3,8 +3,8 @@ DCRM SDK is a distributed key generation and distributed signature module that f
 
 When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the [Wiki](https://github.com/fsn-dev/dcrm-sdk/wiki) for more information.
 
-This SDK allows you to connect to Fusion's sandox directly in either: 
-1. a 2+1 configuration where you form a private group with 2 fusion nodes and your own or 
+This SDK allows you to connect to DCRM's network directly in either: 
+1. a 2+1 configuration where you form a private group with 2 fusion nodes and your own node. 
 2. a local configuration where you can set any ownership of nodes in your group. 
 
 This library contains 2 functions:
