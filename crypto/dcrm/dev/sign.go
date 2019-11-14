@@ -1130,6 +1130,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
+	if SAllx == nil || SAlly == nil || len(en) == 0 || en[0] == "" || len(s1s) == 0 || s1s[en[0]] == nil || len(s1s[en[0]]) < 2 || (s1s[en[0]])[0] == nil || (s1s[en[0]])[1] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("calculate SAllx/SAlly error.")}
+	    ch <- res
+	    return ""
+	}
+
 	SAllx, SAlly = secp256k1.S256().Add(SAllx, SAlly, (s1s[en[0]])[0],(s1s[en[0]])[1])
     }
 	
