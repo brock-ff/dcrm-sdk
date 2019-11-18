@@ -48,8 +48,8 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
     ////////
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
-        fmt.Println("===========validate_lockout,open db fail.=============")
-        res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("open db fail.")}
+	fmt.Println("===========validate_lockout,open db fail.dir = %s,err = %v,pubkey = %s,cointpe = %s=============",dir,err,pubkey,keytype)
+        res := RpcDcrmRes{Ret:"",Err:err}
         ch <- res
         lock5.Unlock()
         return
@@ -129,8 +129,8 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     dir := GetDbDir()
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
-	fmt.Println("===========open db fail.=============")
-        res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("open db fail.")}
+	fmt.Println("===========dcrm_sign,open db fail.dir = %s,err = %v,pubkey = %s,cointpe = %s=============",dir,err,pubkey,cointype)
+        res := RpcDcrmRes{Ret:"",Err:err}
         ch <- res
         lock.Unlock()
         return ""
