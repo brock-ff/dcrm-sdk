@@ -80,7 +80,7 @@ This API generates a signature in distributed fashion by the P2P group.
 ##### Parameters
 
 1. `DATA`,pubkey - the pubkey from `dcrm_genPubkey` request.
-2. `String|HexNumber|TAG` - the hash needing signature. It must be 16-in-32-byte character sprang at the beginning of 0x.  
+2. `String`,|HexNumber|TAG - the hash needing signature. The format is the original 32-bit hexadecimal string appended to the characters "0x".  
     For example: 0x19b6236d2e7eb3e925d0c6e8850502c1f04822eb9aa67cb92e5004f7017e5e41.
 
 ##### Return
