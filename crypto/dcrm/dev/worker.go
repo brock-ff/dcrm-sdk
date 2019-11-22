@@ -142,6 +142,7 @@ func InitDev(groupId string) {
     fmt.Println("=========InitDev===========","groupId",groupId)
     peerscount, _ := GetGroup(groupId)
    NodeCnt = peerscount
+   ThresHold = peerscount
    Enode_cnts = peerscount //bug
     GetEnodesInfo()
 }
@@ -1282,6 +1283,7 @@ func GetEnodesInfo() {
     }
     Enode_cnts,_ = GetGroup(GroupId)
     NodeCnt = Enode_cnts
+    ThresHold = Enode_cnts
     cur_enode = GetSelfEnode()
 }
 
