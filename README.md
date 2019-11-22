@@ -1,5 +1,5 @@
 # Intro
-DCRM SDK is a distributed key generation and distributed signature module that forms the cornerstone of decentralized value exchange.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Dr. Pascal Paillier. 
+DCRM SDK is a distributed key generation and distributed signature module that forms the cornerstone of decentralized value exchange.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Steven Goldfeder, Pascal Paillier, Louis Goubin. 
 
 When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the [Wiki](https://github.com/fsn-dev/dcrm-sdk/wiki) for more information.
 
