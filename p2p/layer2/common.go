@@ -290,6 +290,7 @@ func getGroup(gid discover.NodeID, p2pType int) (int, string) {
 }
 
 func recvGroupInfo(gid discover.NodeID, req interface{}, p2pType int) {
+	fmt.Printf("==== recvGroupInfo() ====, gid: %v, req: %v\n", gid, req)
 	//log.Debug("==== recvGroupInfo() ====", "gid", gid, "req", req)
 	selfid = discover.GetLocalID()
 	//log.Debug("recvGroupInfo", "local ID: ", selfid)
@@ -315,6 +316,7 @@ func recvGroupInfo(gid discover.NodeID, req interface{}, p2pType int) {
 	default:
 		return
 	}
+	updateGroupNodesNumber(len(req.([]*discover.Node)), p2pType)
 	for _, enode := range req.([]*discover.Node) {
 	//	log.Debug("recvGroupInfo", "i: ", i, "e: ", enode)
 		node, _ := discover.ParseNode(enode.String())
@@ -469,5 +471,9 @@ func rlpHash(x interface{}) (h common.Hash) {
 	rlp.Encode(hw, x)
 	hw.Sum(h[:0])
 	return h
+}
+
+func updateGroupNodesNumber(number, p2pType int) {
+	discover.UpdateGroupNodesNumber(number, p2pType)
 }
 

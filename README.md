@@ -1,5 +1,5 @@
 # Intro
-DCRM SDK is a distributed key generation and distributed signature module that forms the cornerstone of decentralized value exchange.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Dr. Pascal Paillier. 
+DCRM SDK is a distributed key generation and distributed signature module that forms the cornerstone of decentralized value exchange.  This technology was developed for over a year, with the feedback of 4 leading cryptographers: Rosario Gennaro, Steven Goldfeder, Pascal Paillier, Louis Goubin. 
 
 When used in context of blockchain, this module can serve as a non-custodial solution, a keyless wallet, a component to an interoperable solution, and more. Please read the [Wiki](https://github.com/fsn-dev/dcrm-sdk/wiki) for more information.
 
@@ -10,6 +10,8 @@ This SDK allows you to connect to DCRM's network directly in either:
 This library contains 2 functions:
 1. Distributed key generation which returns the public key (dcrm_genPubkey)
 2. Distributed signing of transactions (dcrm_sign)
+
+*Note: dcrm-sdk is considered beta software. We make no warranties or guarantees of its security or stability.*
 
 # Prerequisites
 1. Linux terminal
@@ -109,7 +111,11 @@ The SDK can also be configured to run locally, where the user can control owners
 ```
 ./bin/cmd/bootnode --genkey ./bootnode.key
 
-./bin/cmd/bootnode --nodekey ./bootnode.key --addr :5550 --group 0
+The Default setup parameters are:
+1) addr: 5550
+2) group: 0 (group mode)
+3) nodes: 3 (nodes Number form a group)
+./bin/cmd/bootnode --nodekey ./bootnode.key --addr :5550 --group 0 --nodes 3
 
 will print bootnode which use for run node with args --bootnodes
 bootnode key such as enode://16ab118525ec559dde2640b513676b8df7368aac3a80cc5c9d9e8b9c71781c09103fe3e8b5dd17bf245f0c71b891ec4848b142852763ab2146a1e288df15da40@[::]:5550
