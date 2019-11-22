@@ -11,6 +11,8 @@ This library contains 2 functions:
 1. Distributed key generation which returns the public key (dcrm_genPubkey)
 2. Distributed signing of transactions (dcrm_sign)
 
+*Note: dcrm-sdk is considered beta software. We make no warranties or guarantees of its security or stability.*
+
 # Prerequisites
 1. Linux terminal
 2. Golang
