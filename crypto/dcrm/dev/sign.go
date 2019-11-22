@@ -312,6 +312,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	u1zkFactProof := GetZkFactProof(save,k)
+	if u1zkFactProof == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
+	    ch <- res
+	    return ""
+	}
+
 	zkfactproof[en[0]] = u1zkFactProof
 	if IsCurNode(enodes,cur_enode) {
 	    u1u1MtAZK1Proof := lib.MtAZK1Prove(u1K,ukc2[en[0]], ukc3[en[0]], u1zkFactProof)
@@ -718,6 +724,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
+	//bug
+	if len(en) == 0 || en[0] == "" || mkg_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkg[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
+	    ch <- res
+	    return ""
+	}
+	//
 	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt111 {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMKGFail)}
@@ -1350,6 +1363,10 @@ func GetZkFactProof(save string,index int) *lib.ZkFactProof {
 
     mm := strings.Split(save, SepSave)
     s := 4 + 4*NodeCnt + 5*index////????? TODO
+    if len(mm) < (s+5) {
+	return nil
+    }
+
     h1 := new(big.Int).SetBytes([]byte(mm[s]))
     h2 := new(big.Int).SetBytes([]byte(mm[s+1]))
     y := new(big.Int).SetBytes([]byte(mm[s+2]))

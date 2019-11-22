@@ -320,6 +320,12 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     var upg = make(map[string]*lib.PolyGStruct)
     for _,v := range ds {
 	mm := strings.Split(v, Sep)
+	if len(mm) < (6+dlen) {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
+	    ch <- res
+	    return false
+	}
+
 	dlen,_ := strconv.Atoi(mm[2])
 	pglen,_ := strconv.Atoi(mm[3+dlen+2])
 	pglen = (pglen/2)
@@ -328,8 +334,18 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	for j:=0;j<pglen;j++ {
 	    l++
 	    var gg = make([]*big.Int,0)
+	    if len(mm) < (6+dlen+l) {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
+		ch <- res
+		return false
+	    }
 	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[5+dlen+l])))
 	    l++
+	    if len(mm) < (6+dlen+l) {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
+		ch <- res
+		return false
+	    }
 	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[5+dlen+l])))
 	    pgss = append(pgss,gg)
 	}
