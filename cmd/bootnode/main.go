@@ -35,7 +35,7 @@ import (
 func main() {
 	var (
 		groupNum    = flag.Int("group", int(0), "group Number: default 0")
-		groupNodesNum = flag.Uint("nodes", uint(3), "nodes Number in some group, must > 0")
+		groupNodesNum = flag.Uint("nodes", uint(3), "nodes Number in some group, must >= 2")
 		listenAddr  = flag.String("addr", ":40401", "listen address")
 		genKey      = flag.String("genkey", "", "generate a node key")
 		writeAddr   = flag.Bool("writeaddress", false, "write out the node's pubkey hash and quit")
@@ -56,8 +56,8 @@ func main() {
 		return
 	}
 	switch {
-	case *groupNodesNum == 0:
-		fmt.Printf("Use -nodes must bigger than zero\n")
+	case *groupNodesNum < 2:
+		fmt.Printf("Use --nodes must >= 2\n")
 		return
 	case *genKey != "":
 		nodeKey, err = crypto.GenerateKey()
