@@ -202,7 +202,6 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
 //msgprex = hash
 //return value is the backup for the dcrm sig
 func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big.Int,pky *big.Int,ch chan interface{},id int) string {
-    //gc := getgroupcount()
     if id < 0 || id >= len(workers) {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("no find worker.")}
 	ch <- res
@@ -256,7 +255,14 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	lambda1 = new(big.Int).Mul(lambda1, times)
 	lambda1 = new(big.Int).Mod(lambda1, secp256k1.S256().N)
     }
+    
     mm := strings.Split(save, SepSave)
+    if len(mm) == 0 {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail")}
+	ch <- res
+	return ""
+    }
+
     skU1 := new(big.Int).SetBytes([]byte(mm[0]))
     w1 := new(big.Int).Mul(lambda1, skU1)
     w1 = new(big.Int).Mod(w1,secp256k1.S256().N)
@@ -297,6 +303,11 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    u1PaillierPk := GetPaillierPk(save,k)
+	    if u1PaillierPk == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save paillier pk fail")}
+		ch <- res
+		return ""
+	    }
 	    u1KCipher,u1R,_ := u1PaillierPk.Encrypt(u1K)
 	    ukc[en[0]] = u1KCipher
 	    ukc2[en[0]] = u1R
@@ -313,6 +324,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	u1zkFactProof := GetZkFactProof(save,k)
 	if u1zkFactProof == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
+	    ch <- res
+	    return ""
+	}
+
+	if len(en) == 0 || en[0] == "" {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
 	    ch <- res
 	    return ""
@@ -387,6 +404,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range kcs {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_kc fail")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -421,6 +444,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range mtazk1s {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 8 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_mtazk1proof fail")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -442,6 +471,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
+	    if cur_enode == "" || zk1proof[cur_enode] == nil || zkfactproof[cur_enode] == nil || ukc[cur_enode] == nil || ukc3[cur_enode] == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mtazk1 verification fail")}
+		ch <- res
+		return ""
+	    }
+
 	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
 	    if !u1rlt1 {
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
@@ -479,6 +514,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    _,exsit = zkfactproof[cur_enode]
 	    if exsit == false {
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
+		ch <- res
+		return ""
+	    }
+
+	    if len(en) == 0 || en[0] == "" || zk1proof[en[0]] == nil || zkfactproof[cur_enode] == nil || ukc[en[0]] == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mtazk1 verification fail")}
 		ch <- res
 		return ""
 	    }
@@ -531,7 +572,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    u1PaillierPk := GetPaillierPk(save,k)
+	    if u1PaillierPk == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get paillier pk fail")}
+		ch <- res
+		return ""
+	    }
+
 	    u1KGamma1Cipher := u1PaillierPk.HomoMul(ukc[en[0]], u1Gamma)
+	    if betaU1Star[k] == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get betaU1Star fail")}
+		ch <- res
+		return ""
+	    }
+
 	    beta1U1StarCipher, u1BetaR1,_ := u1PaillierPk.Encrypt(betaU1Star[k])
 	    u1KGamma1Cipher = u1PaillierPk.HomoAdd(u1KGamma1Cipher, beta1U1StarCipher) // send to u1
 	    u1u1MtAZK2Proof := lib.MtAZK2Prove(u1Gamma, betaU1Star[k], u1BetaR1, ukc[cur_enode],ukc3[cur_enode], zkfactproof[cur_enode])
@@ -541,7 +594,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	
 	u2PaillierPk := GetPaillierPk(save,k)
+	if u2PaillierPk == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get paillier pk fail")}
+	    ch <- res
+	    return ""
+	}
+
 	u2KGamma1Cipher := u2PaillierPk.HomoMul(ukc[en[0]], u1Gamma)
+	if betaU1Star[k] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get betaU1Star fail")}
+	    ch <- res
+	    return ""
+	}
+
 	beta2U1StarCipher, u2BetaR1,_ := u2PaillierPk.Encrypt(betaU1Star[k])
 	u2KGamma1Cipher = u2PaillierPk.HomoAdd(u2KGamma1Cipher, beta2U1StarCipher) // send to u2
 	u2u1MtAZK2Proof := lib.MtAZK2Prove(u1Gamma, betaU1Star[k], u2BetaR1, ukc[en[0]],u2PaillierPk,zkfactproof[cur_enode])
@@ -574,7 +639,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    u1PaillierPk := GetPaillierPk(save,k)
+	    if u1PaillierPk == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get paillier pk fail")}
+		ch <- res
+		return ""
+	    }
+
 	    u1Kw1Cipher := u1PaillierPk.HomoMul(ukc[en[0]], w1)
+	    if vU1Star[k] == nil {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get vU1Star fail")}
+		ch <- res
+		return ""
+	    }
+
 	    v1U1StarCipher, u1VR1,_ := u1PaillierPk.Encrypt(vU1Star[k])
 	    u1Kw1Cipher = u1PaillierPk.HomoAdd(u1Kw1Cipher, v1U1StarCipher) // send to u1
 	    u1u1MtAZK2Proof2 := lib.MtAZK2Prove(w1, vU1Star[k], u1VR1, ukc[cur_enode], ukc3[cur_enode], zkfactproof[cur_enode])
@@ -584,7 +661,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	
 	u2PaillierPk := GetPaillierPk(save,k)
+	if u2PaillierPk == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get paillier pk fail")}
+	    ch <- res
+	    return ""
+	}
+
 	u2Kw1Cipher := u2PaillierPk.HomoMul(ukc[en[0]], w1)
+	if vU1Star[k] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get vU1Star fail")}
+	    ch <- res
+	    return ""
+	}
+
 	v2U1StarCipher, u2VR1,_ := u2PaillierPk.Encrypt(vU1Star[k])
 	u2Kw1Cipher = u2PaillierPk.HomoAdd(u2Kw1Cipher,v2U1StarCipher) // send to u2
 	u2u1MtAZK2Proof2 := lib.MtAZK2Prove(w1, vU1Star[k], u2VR1, ukc[en[0]], u2PaillierPk, zkfactproof[cur_enode])
@@ -642,6 +731,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range mkgs {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 13 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_mkg fail")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -697,6 +792,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range mkws {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 13 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_mkw fail")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -734,6 +835,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt111 {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMKGFail)}
+	    ch <- res
+	    return ""
+	}
+
+	if len(en) == 0 || en[0] == "" || mkw_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkw[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
 	}
@@ -859,6 +966,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range dels {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_delta1 fail.")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -892,7 +1005,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
-	if deltaSum == nil || len(en) < 1 || delta1s[en[0]] == nil {
+	if deltaSum == nil || len(en) < 1 || en[0] == "" || delta1s[en[0]] == nil {
 	    var ret2 Err
 	    ret2.Info = "calc deltaSum error"
 	    res := RpcDcrmRes{Ret:"",Err:ret2}
@@ -934,6 +1047,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	ch <- res
 	return ""
     }
+
     itmp = 0
     iter = w.msg_d11_1.Front()
     for iter != nil {
@@ -964,10 +1078,22 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var udecom = make(map[string]*lib.Commitment)
     for _,v := range c11s {
 	mm := strings.Split(v, Sep)
+	if len(mm) < 3 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_c11 fail.")}
+	    ch <- res
+	    return ""
+	}
+
 	prex := mm[0]
 	prexs := strings.Split(prex,"-")
 	for _,vv := range d11s {
 	    mmm := strings.Split(vv, Sep)
+	    if len(mmm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d11 fail.")}
+		ch <- res
+		return ""
+	    }
+
 	    prex2 := mmm[0]
 	    prexs2 := strings.Split(prex2,"-")
 	    if prexs[len(prexs)-1] == prexs2[len(prexs2)-1] {
@@ -976,14 +1102,22 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		l := 0
 		for j:=0;j<dlen;j++ {
 		    l++
+		    if len(mmm) < (3+l) {
+			res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d11 fail.")}
+			ch <- res
+			return ""
+		    }
+
 		    gg = append(gg,new(big.Int).SetBytes([]byte(mmm[2+l])))
 		}
+
 		deCommit := &lib.Commitment{C:new(big.Int).SetBytes([]byte(mm[2])), D:gg}
 		udecom[prexs[len(prexs)-1]] = deCommit
 		break
 	    }
 	}
     }
+
     deCommit_commitU1GammaG := &lib.Commitment{C: commitU1GammaG.C, D: commitU1GammaG.D}
     udecom[cur_enode] = deCommit_commitU1GammaG
 
@@ -992,11 +1126,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
-	if len(en) <= 0 {
+	if len(en) <= 0 || en[0] == "" {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit fail.")}
 	    ch <- res
 	    return ""
 	}
+
 	_,exsit := udecom[en[0]]
 	if exsit == false {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit fail.")}
@@ -1004,6 +1139,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    return ""
 	}
 	//
+
+	if udecom[en[0]] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit fail.")}
+	    ch <- res
+	    return ""
+	}
 
 	if udecom[en[0]].Verify() == false {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit fail.")}
@@ -1111,8 +1252,15 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	if IsCurNode(enodes,cur_enode) {
 	    continue
 	}
+
 	for _,v := range us1s {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 4 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_s1 fail.")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -1211,8 +1359,15 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	if IsCurNode(enodes,cur_enode) {
 	    continue
 	}
+
 	for _,v := range uss1s {
 	    mm := strings.Split(v, Sep)
+	    if len(mm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get ss1 fail.")}
+		ch <- res
+		return ""
+	    }
+
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
@@ -1297,11 +1452,11 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	pkr2 := hex.EncodeToString(pkr)
 	pbhs2 := []rune(pkr2)
 	if string(pbhs2[0:2]) == "0x" {
-		    pkr2 = string(pbhs2[2:])
+	    pkr2 = string(pbhs2[2:])
 	}
 	if e == nil && strings.EqualFold(pkr2,pubkeyhex) {
-		recid = j
-		break
+	    recid = j
+	    break
 	}
     }
     ///// 
@@ -1334,6 +1489,10 @@ func GetPaillierPk(save string,index int) *lib.PublicKey {
 
     mm := strings.Split(save, SepSave)
     s := 4 + 4*index
+    if len(mm) < (s+4) {
+	return nil
+    }
+
     l := mm[s]
     n := new(big.Int).SetBytes([]byte(mm[s+1]))
     g := new(big.Int).SetBytes([]byte(mm[s+2]))
@@ -1346,6 +1505,10 @@ func GetPaillierSk(save string,index int) *lib.PrivateKey {
     publicKey := GetPaillierPk(save,index)
     if publicKey != nil {
 	mm := strings.Split(save, SepSave)
+	if len(mm) < 4 {
+	    return nil
+	}
+
 	l := mm[1]
 	ll := new(big.Int).SetBytes([]byte(mm[2]))
 	uu := new(big.Int).SetBytes([]byte(mm[3]))

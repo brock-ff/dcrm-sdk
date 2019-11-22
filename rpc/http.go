@@ -93,8 +93,8 @@ type HTTPTimeouts struct {
 // DefaultHTTPTimeouts represents the default timeout values used if further
 // configuration is not provided.
 var DefaultHTTPTimeouts = HTTPTimeouts{
-	ReadTimeout:  100 * time.Second, //30 --> 100
-	WriteTimeout: 100 * time.Second, //30 --> 100
+	ReadTimeout:  500 * time.Second, //30 --> 500
+	WriteTimeout: 500 * time.Second, //30 --> 500
 	IdleTimeout:  120 * time.Second,
 }
 

@@ -363,6 +363,13 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     for _,id := range ids {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
+	//bug
+	if len(en) == 0 || en[0] == "" || sstruct[en[0]] == nil || upg[en[0]] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifySHARE1Fail)}
+	    ch <- res
+	    return false
+	}
+	//
 	if sstruct[en[0]].Verify(upg[en[0]]) == false {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifySHARE1Fail)}
 	    ch <- res
@@ -390,10 +397,22 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     var udecom = make(map[string]*lib.Commitment)
     for _,v := range cs {
 	mm := strings.Split(v, Sep)
+	if len(mm) < 3 {
+	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetAllC1Fail)}
+	    ch <- res
+	    return false
+	}
 	prex := mm[0]
 	prexs := strings.Split(prex,"-")
 	for _,vv := range ds {
 	    mmm := strings.Split(vv, Sep)
+	    //bug
+	    if len(mmm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetAllC1Fail)}
+		ch <- res
+		return false
+	    }
+
 	    prex2 := mmm[0]
 	    prexs2 := strings.Split(prex2,"-")
 	    if prexs[len(prexs)-1] == prexs2[len(prexs2)-1] {
@@ -402,6 +421,12 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 		l := 0
 		for j:=0;j<dlen;j++ {
 		    l++
+		    //bug
+		    if len(mmm) < (3+l) {
+			res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetAllC1Fail)}
+			ch <- res
+			return false
+		    }
 		    gg = append(gg,new(big.Int).SetBytes([]byte(mmm[2+l])))
 		}
 		deCommit := &lib.Commitment{C:new(big.Int).SetBytes([]byte(mm[2])), D:gg}
@@ -417,6 +442,11 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     for _,id := range ids {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
+	if len(en) == 0 || en[0] == "" || udecom[en[0]] == nil {
+	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrKeyGenVerifyCommitFail)}
+	    ch <- res
+	    return false
+	}
 	if udecom[en[0]].Verify() == false {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrKeyGenVerifyCommitFail)}
 	    ch <- res

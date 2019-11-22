@@ -92,8 +92,8 @@ func (this *Service) Sign(pubkey string,message string) map[string]interface{} {
 	}
     }
 
-    var err error
-    for i:=0;i<3;i++ {
+    var errtmp error
+    for i:=0;i<5;i++ {
 	msg := pubkey + ":" + keytype + ":" + message
 	rsv,err := dcrm.SendReqToGroup(msg,"rpc_sign")
 	if err == nil && rsv != "" {
@@ -102,14 +102,15 @@ func (this *Service) Sign(pubkey string,message string) map[string]interface{} {
 		    "rsv": rsv,
 	    }
 	}
-	
+
+	errtmp = err
 	time.Sleep(time.Duration(1000000)) //1000 000 000 == 1s
     }
 
-    if err != nil {
-	fmt.Println("========dcrm_sign,err = %s =============",err.Error())
+    if errtmp != nil {
+	fmt.Println("========dcrm_sign,err = %s =============",errtmp.Error())
 	return map[string]interface{}{
-		"error": err.Error(),
+		"error": errtmp.Error(),
 	}
     }
     
