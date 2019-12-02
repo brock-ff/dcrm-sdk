@@ -43,9 +43,9 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout = 80 
-    sendtogroup_timeout = 80
-    ch_t = 10
+    sendtogroup_lilo_timeout =  800 
+    sendtogroup_timeout = 800
+    ch_t = 100
 
     //callback
     GetGroup func(string) (int,string)
@@ -323,8 +323,16 @@ func (d *ReqDispatcher) dispatch() {
 }
 
 func FindWorker(sid string) (*RpcReqWorker,error) {
+    if sid == "" {
+	return nil,fmt.Errorf("input worker id error.")
+    }
+
     for i := 0; i < RpcMaxWorker; i++ {
 	w := workers[i]
+
+	if w.sid == "" {
+	    continue
+	}
 
 	if strings.EqualFold(w.sid,sid) {
 	    return w,nil
@@ -335,6 +343,10 @@ func FindWorker(sid string) (*RpcReqWorker,error) {
     
     for i := 0; i < RpcMaxWorker; i++ {
 	w := workers[i]
+	if w.sid == "" {
+	    continue
+	}
+
 	if strings.EqualFold(w.sid,sid) {
 	    return w,nil
 	}
