@@ -1412,8 +1412,16 @@ func Find(l *list.List,msg string) bool {
     var next *list.Element
     for e := l.Front(); e != nil; e = next {
         next = e.Next()
-        
+       
+	if e.Value == nil {
+	    continue
+	}
+
 	s := e.Value.(string)
+	if s == "" {
+	    continue
+	}
+
 	if strings.EqualFold(s,msg) {
 	    return true
 	}
