@@ -72,8 +72,8 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
     iter.Release()
     ///////
     if data == "" {
-	fmt.Println("===========get generate save data fail.=============")
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get data fail.")}
+	fmt.Println("===========validate_lockout,get generate save data fail.=============")
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail.")}
 	ch <- res
 	db.Close()
 	lock5.Unlock()
@@ -84,7 +84,8 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
 
     realdcrmpubkey := hex.EncodeToString([]byte(datas[0]))
     if !strings.EqualFold(realdcrmpubkey,pubkey) {
-        res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get data fail")}
+	fmt.Println("============validate_lockout,pubkey = %s,realdcrmpubkey = %s ==============",pubkey,realdcrmpubkey)
+        res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("pubkey check fail")}
         ch <- res
         db.Close()
         lock5.Unlock()
@@ -139,7 +140,8 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     //
     pub,err := hex.DecodeString(pubkey)
     if err != nil {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get data fail.")}
+	fmt.Println("============dcrm_sign,pubkey = %s,err = %s ==============",pubkey,err.Error())
+	res := RpcDcrmRes{Ret:"",Err:err}
 	ch <- res
 	db.Close()
 	lock.Unlock()
@@ -163,8 +165,8 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     iter.Release()
     
     if data == "" {
-	fmt.Println("===========get generate save data fail.=============")
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get data fail.")}
+	fmt.Println("===========dcrm_sign,get generate save data fail.=============")
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail.")}
 	ch <- res
 	db.Close()
 	lock.Unlock()
@@ -189,7 +191,7 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
 
     w,err := FindWorker(msgprex)
     if w == nil || err != nil {
-	fmt.Println("===========get worker fail.=============")
+	fmt.Println("===========dcrm_sign,get worker fail.=============")
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("no find worker.")}
 	ch <- res
 	return ""
@@ -218,6 +220,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     
     hashBytes, err2 := hex.DecodeString(message)
     if err2 != nil {
+	fmt.Println("===============Sign_ec2,decode string err = %s=================",err2.Error())
 	res := RpcDcrmRes{Ret:"",Err:err2}
 	ch <- res
 	return ""
@@ -258,6 +261,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     
     mm := strings.Split(save, SepSave)
     if len(mm) == 0 {
+	fmt.Println("=============Sign_ec2,get save data fail. save = %s,sep = %s ================",save,SepSave)
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail")}
 	ch <- res
 	return ""
@@ -283,6 +287,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     s1 := string(commitU1GammaG.C.Bytes())
     ss := enode + Sep + s0 + Sep + s1
     SendMsgToDcrmGroup(ss,GroupId)
+    fmt.Println("=============Sign_ec2,send msg to group,type is C11================")
 
     // 1. Receive Broadcast
     //	commitU1GammaG.C, commitU2GammaG.C, commitU3GammaG.C
@@ -292,6 +297,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	ch <- res
 	return ""
     }
+    fmt.Println("=============Sign_ec2,get all C11================")
     
     // 2. MtA(k, gamma) and MtA(k, w)
     // 2.1 encrypt c_k = E_paillier(k)
@@ -1540,11 +1546,18 @@ func GetZkFactProof(save string,index int) *lib.ZkFactProof {
 }
 
 func SendMsgToDcrmGroup(msg string,groupid string) {
-    BroadcastInGroupOthers(groupid,msg)
+    
+    for i:= 0;i<1;i++ {
+	BroadcastInGroupOthers(groupid,msg)
+	//time.Sleep(time.Duration(10000000)) //1000 == 1s //TODO
+    }
 }
 
 func SendMsgToPeer(enodes string,msg string) {
-    SendToPeer(enodes,msg)
+    for i:= 0;i<1;i++ {
+	SendToPeer(enodes,msg)
+	//time.Sleep(time.Duration(1000000)) //1000 == 1s //TODO
+    }
 }
 
 type ECDSASignature struct {

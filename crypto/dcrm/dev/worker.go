@@ -43,8 +43,8 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  200 
-    sendtogroup_timeout = 200
+    sendtogroup_lilo_timeout =  400 
+    sendtogroup_timeout = 400
     ch_t = 100
 
     //callback
@@ -150,8 +150,8 @@ func InitDev(groupId string) {
 ////////////////////////dcrm///////////////////////////////
 var (
     //rpc-req //dcrm node
-    RpcMaxWorker = 10000 
-    RpcMaxQueue  = 10000
+    RpcMaxWorker = 100 
+    RpcMaxQueue  = 100
     RpcReqQueue chan RpcReq 
     workers []*RpcReqWorker
     //rpc-req
@@ -764,7 +764,7 @@ func Dcrmcallret(msg interface{},enode string) {
 	return
     }
    
-    fmt.Println("=========Dcrmcallret,node count=%v,recev from node = %s,cur_enode = %s ==============",NodeCnt,enode,cur_enode)
+    fmt.Println("=========Dcrmcallret,node count=%v,recev from node = %s,cur_enode = %s,msg =%s ==============",NodeCnt,enode,cur_enode,res)
 
     ss := strings.Split(res,Sep)
     if len(ss) != 4 {
@@ -852,7 +852,7 @@ func GetGroupRes(wid int) RpcDcrmRes {
     for iter != nil {
 	ll := iter.Value.(*RpcDcrmRes)
 	err = ll.Err
-	if err == nil {
+	if err != nil {
 	    return (*ll)
 	}
 	iter = iter.Next()
@@ -861,9 +861,10 @@ func GetGroupRes(wid int) RpcDcrmRes {
     iter = l.Front()
     for iter != nil {
 	ll := iter.Value.(*RpcDcrmRes)
-	err = ll.Err
-	res2 := RpcDcrmRes{Ret:"",Err:err}
-	return res2
+	//err = ll.Err
+	//res2 := RpcDcrmRes{Ret:"",Err:err}
+	//return res2
+	return (*ll)
 	
 	iter = iter.Next()
     }
@@ -950,9 +951,8 @@ func (self *RecvMsg) Run(workid int,ch chan interface{}) bool {
 	    }
 
 	    if cherr != nil {
-		var ret2 Err
-		ret2.Info = cherr.Error() 
-		res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:ret2}
+		fmt.Println("===============Recv.Run,lockout err = %s ==================",cherr.Error())
+		res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:cherr}
 		ch <- res2
 		return false
 	    }
@@ -1404,6 +1404,24 @@ func (e Err) Error() string {
 	return e.Info
 }
 
+func Find(l *list.List,msg string) bool {
+    if l == nil || msg == "" {
+	return false
+    }
+
+    var next *list.Element
+    for e := l.Front(); e != nil; e = next {
+        next = e.Next()
+        
+	s := e.Value.(string)
+	if strings.EqualFold(s,msg) {
+	    return true
+	}
+    }
+    
+    return false
+}
+
 //msg:  hash-enode:C1:X1:X2
 func DisMsg(msg string) {
 
@@ -1437,6 +1455,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_c1,msg) {
+		return
+	    }
+
 	    w.msg_c1.PushBack(msg)
 	    if w.msg_c1.Len() == (NodeCnt-1) {
 		fmt.Println("=========Get All C1===========","GroupId",w.groupid)
@@ -1448,6 +1470,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_d1_1,msg) {
+		return
+	    }
+
 	    w.msg_d1_1.PushBack(msg)
 	    if w.msg_d1_1.Len() == (NodeCnt-1) {
 		fmt.Println("=========Get All D1===========","GroupId",w.groupid)
@@ -1459,6 +1485,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_share1,msg) {
+		return
+	    }
+
 	    w.msg_share1.PushBack(msg)
 	    if w.msg_share1.Len() == (NodeCnt-1) {
 		fmt.Println("=========Get All SHARE1===========","GroupId",w.groupid)
@@ -1470,6 +1500,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_zkfact,msg) {
+		return
+	    }
+
 	    w.msg_zkfact.PushBack(msg)
 	    if w.msg_zkfact.Len() == (NodeCnt-1) {
 		fmt.Println("=========Get All ZKFACTPROOF===========","GroupId",w.groupid)
@@ -1481,6 +1515,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_zku,msg) {
+		return
+	    }
+
 	    w.msg_zku.PushBack(msg)
 	    if w.msg_zku.Len() == (NodeCnt-1) {
 		fmt.Println("=========Get All ZKUPROOF===========","GroupId",w.groupid)
@@ -1492,6 +1530,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_mtazk1proof,msg) {
+		return
+	    }
+
 	    w.msg_mtazk1proof.PushBack(msg)
 	    if w.msg_mtazk1proof.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All MTAZK1PROOF===========","GroupId",w.groupid)
@@ -1504,6 +1546,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_c11,msg) {
+		return
+	    }
+
 	    w.msg_c11.PushBack(msg)
 	    if w.msg_c11.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All C11===========","GroupId",w.groupid)
@@ -1515,6 +1561,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_kc,msg) {
+		return
+	    }
+
 	    w.msg_kc.PushBack(msg)
 	    if w.msg_kc.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All KC===========","GroupId",w.groupid)
@@ -1526,6 +1576,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_mkg,msg) {
+		return
+	    }
+
 	    w.msg_mkg.PushBack(msg)
 	    if w.msg_mkg.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All MKG===========","GroupId",w.groupid)
@@ -1537,6 +1591,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_mkw,msg) {
+		return
+	    }
+
 	    w.msg_mkw.PushBack(msg)
 	    if w.msg_mkw.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All MKW===========","GroupId",w.groupid)
@@ -1548,6 +1606,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_delta1,msg) {
+		return
+	    }
+
 	    w.msg_delta1.PushBack(msg)
 	    if w.msg_delta1.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All DELTA1===========","GroupId",w.groupid)
@@ -1559,6 +1621,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_d11_1,msg) {
+		return
+	    }
+
 	    w.msg_d11_1.PushBack(msg)
 	    if w.msg_d11_1.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All D11===========","GroupId",w.groupid)
@@ -1570,6 +1636,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_s1,msg) {
+		return
+	    }
+
 	    w.msg_s1.PushBack(msg)
 	    if w.msg_s1.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All S1===========","GroupId",w.groupid)
@@ -1581,6 +1651,10 @@ func DisMsg(msg string) {
 		return
 	    }
 	    ///
+	    if Find(w.msg_ss1,msg) {
+		return
+	    }
+
 	    w.msg_ss1.PushBack(msg)
 	    if w.msg_ss1.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All SS1===========","GroupId",w.groupid)
