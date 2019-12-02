@@ -43,8 +43,8 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  800 
-    sendtogroup_timeout = 800
+    sendtogroup_lilo_timeout =  200 
+    sendtogroup_timeout = 200
     ch_t = 100
 
     //callback
@@ -764,7 +764,7 @@ func Dcrmcallret(msg interface{},enode string) {
 	return
     }
    
-    fmt.Println("=========Dcrmcallret,node count=%v==============",NodeCnt)
+    fmt.Println("=========Dcrmcallret,node count=%v,recev from node = %s,cur_enode = %s ==============",NodeCnt,enode,cur_enode)
 
     ss := strings.Split(res,Sep)
     if len(ss) != 4 {
