@@ -293,6 +293,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	prexs := strings.Split(prex,"-")
 	sstruct[prexs[len(prexs)-1]] = ushare
     }
+
     for _,v := range u1Shares {
 	uid := lib.GetSharesId(v)
 	enodes := GetEnodesByUid(uid,cointype,GroupId)

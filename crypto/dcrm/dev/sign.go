@@ -1527,12 +1527,14 @@ func GetPaillierSk(save string,index int) *lib.PrivateKey {
 
 func GetZkFactProof(save string,index int) *lib.ZkFactProof {
     if save == "" || index < 0 {
+	fmt.Println("===============GetZkFactProof,get zkfactproof error,save = %s,index = %v ==============",save,index)
 	return nil
     }
 
     mm := strings.Split(save, SepSave)
     s := 4 + 4*NodeCnt + 5*index////????? TODO
     if len(mm) < (s+5) {
+	fmt.Println("===============GetZkFactProof,get zkfactproof error,save = %s,index = %v ==============",save,index)
 	return nil
     }
 
