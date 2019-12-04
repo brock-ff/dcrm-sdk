@@ -84,6 +84,7 @@ func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
     dir := GetDbDir()
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
+	fmt.Println("=================dcrm_liloreqAddress,dir = %s,err = %v ===================",dir,err)
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrCreateDbFail)}
 	ch <- res
 	lock.Unlock()
