@@ -79,15 +79,16 @@ func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
     }
     save := iter.Value.(string)
 
+    fmt.Println("=============================dcrm_liloreqAddress,write data to db start,worker id = %v =======================================",id)
     lock.Lock()
     //write db
     dir := GetDbDir()
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
-	fmt.Println("=================dcrm_liloreqAddress,dir = %s,err = %v ===================",dir,err)
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrCreateDbFail)}
 	ch <- res
 	lock.Unlock()
+	fmt.Println("=============================dcrm_liloreqAddress,terminal write data to db,worker id = %v =======================================",id)
 	return
     }
 
@@ -98,6 +99,7 @@ func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
     db.Put(ys,[]byte(ss),nil)
     db.Close()
     lock.Unlock()
+    fmt.Println("=============================dcrm_liloreqAddress,write data to db end,worker id = %v =======================================",id)
     res := RpcDcrmRes{Ret:pubkeyhex,Err:nil}
     ch <- res
 }
@@ -113,7 +115,6 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     w := workers[id]
     GroupId := w.groupid 
-    fmt.Println("========KeyGenerate_ec2============","GroupId",GroupId)
     if GroupId == "" {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get group id fail.")}
 	ch <- res
@@ -568,12 +569,12 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     s5 = string(u1zkFactProof.N.Bytes())
     ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3 + Sep + s4 + Sep + s5
     SendMsgToDcrmGroup(ss,GroupId)
+    fmt.Println("=====================KeyGenerate_ec2,zkfactproof data size = %v =====================",len(ss))
 
     // 1. Receive Broadcast zk
     // u1zkFactProof, u2zkFactProof, u3zkFactProof, u4zkFactProof, u5zkFactProof
     _,cherr = GetChannelValue(ch_t,w.bzkfact)
     if cherr != nil {
-//	log.Debug("get w.bzkfact timeout in keygenerate.")
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetZKFACTPROOFTimeout)}
 	ch <- res
 	return false 
@@ -595,7 +596,6 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     // u1zkUProof, u2zkUProof, u3zkUProof, u4zkUProof, u5zkUProof
     _,cherr = GetChannelValue(ch_t,w.bzku)
     if cherr != nil {
-//	log.Info("get w.bzku timeout in keygenerate.")
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetZKUPROOFTimeout)}
 	ch <- res
 	return false 

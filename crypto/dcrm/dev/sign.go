@@ -174,8 +174,8 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     }
 
     datas := strings.Split(string(data),Sep)
-
-    save := datas[1] 
+    save := datas[1]
+    fmt.Println("==================dcrm_sign,datas len = %v,save = %s =======================",len(datas),save)
     
     dcrmpub := datas[0]
     dcrmpks := []byte(dcrmpub)
@@ -330,12 +330,14 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	u1zkFactProof := GetZkFactProof(save,k)
 	if u1zkFactProof == nil {
+	    fmt.Println("=================Sign_ec2,u1zkFactProof is nil.=====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
 	    ch <- res
 	    return ""
 	}
 
 	if len(en) == 0 || en[0] == "" {
+	    fmt.Println("=================Sign_ec2,get enode error,enodes = %s,uid = %v,cointype = %s,groupid = %s =====================",enodes,id,cointype,GroupId)
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
 	    ch <- res
 	    return ""
@@ -1548,18 +1550,13 @@ func GetZkFactProof(save string,index int) *lib.ZkFactProof {
 }
 
 func SendMsgToDcrmGroup(msg string,groupid string) {
-    
-    for i:= 0;i<1;i++ {
-	BroadcastInGroupOthers(groupid,msg)
-	//time.Sleep(time.Duration(10000000)) //1000 == 1s //TODO
-    }
+    fmt.Println("============SendMsgToDcrmGroup,msg = %s,groupid = %s ==============",msg,groupid)
+    BroadcastInGroupOthers(groupid,msg)
 }
 
 func SendMsgToPeer(enodes string,msg string) {
-    for i:= 0;i<1;i++ {
-	SendToPeer(enodes,msg)
-	//time.Sleep(time.Duration(1000000)) //1000 == 1s //TODO
-    }
+    fmt.Println("============SendMsgToPeer,enodes = %s,msg = %s ==============",enodes,msg)
+    SendToPeer(enodes,msg)
 }
 
 type ECDSASignature struct {
