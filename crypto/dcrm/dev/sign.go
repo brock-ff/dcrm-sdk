@@ -1551,12 +1551,18 @@ func GetZkFactProof(save string,index int) *lib.ZkFactProof {
 
 func SendMsgToDcrmGroup(msg string,groupid string) {
     fmt.Println("============SendMsgToDcrmGroup,msg = %s,groupid = %s ==============",msg,groupid)
-    BroadcastInGroupOthers(groupid,msg)
+    _,err := BroadcastInGroupOthers(groupid,msg)
+    if err != nil {
+	fmt.Println("==============SendMsgToDcrmGroup,broadcast msg to group others fail,error =%v ===================",err)
+    }
 }
 
 func SendMsgToPeer(enodes string,msg string) {
     fmt.Println("============SendMsgToPeer,enodes = %s,msg = %s ==============",enodes,msg)
-    SendToPeer(enodes,msg)
+    err := SendToPeer(enodes,msg)
+    if err != nil {
+	fmt.Println("==============SendMsgToPeer,send to peer fail,error =%v ===================",err)
+    }
 }
 
 type ECDSASignature struct {

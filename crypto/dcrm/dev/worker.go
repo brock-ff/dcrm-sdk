@@ -49,9 +49,9 @@ var (
 
     //callback
     GetGroup func(string) (int,string)
-    SendToGroupAllNodes func(string,string) string
+    SendToGroupAllNodes func(string,string) (string,error)
     GetSelfEnode func() string
-    BroadcastInGroupOthers func(string,string)
+    BroadcastInGroupOthers func(string,string) (string,error)
     SendToPeer func(string,string) error
     ParseNode func(string) string
 )
@@ -60,7 +60,7 @@ func RegP2pGetGroupCallBack(f func(string)(int,string)) {
     GetGroup = f
 }
 
-func RegP2pSendToGroupAllNodesCallBack(f func(string,string)string) {
+func RegP2pSendToGroupAllNodesCallBack(f func(string,string) (string,error)) {
     SendToGroupAllNodes = f
 }
 
@@ -68,7 +68,7 @@ func RegP2pGetSelfEnodeCallBack(f func()string) {
     GetSelfEnode = f
 }
 
-func RegP2pBroadcastInGroupOthersCallBack(f func(string,string)) {
+func RegP2pBroadcastInGroupOthersCallBack(f func(string,string) (string,error)) {
     BroadcastInGroupOthers = f
 }
 
@@ -1110,16 +1110,16 @@ func (self *ReqAddrSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
 
     GroupId := GetGroupIdByEnode(cur_enode)
     fmt.Println("=========ReqAddrSendMsgToMsg.Run===========","GroupId",GroupId,"cur_enode",cur_enode)
-    //if !strings.EqualFold(GroupId,cur_enode) {
     if strings.EqualFold(GroupId,"") {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get group id fail.")}
 	ch <- res
 	return false
     }
 
-    s := SendToGroupAllNodes(GroupId,res)
+    _,err = SendToGroupAllNodes(GroupId,res)
     
-    if strings.EqualFold(s,"send fail.") {
+    if err != nil {
+	fmt.Println("===============ReqAddrSendMsgToMsg.Run,send to group all nodes fail,error = %s ===================",err.Error())
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrSendDataToGroupFail)}
 	ch <- res
 	return false
@@ -1196,8 +1196,10 @@ func (self *SignSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
 	ch <- res
 	return false
     }
-    s := SendToGroupAllNodes(GroupId,res)
-    if strings.EqualFold(s,"send fail.") {
+    
+    _,err = SendToGroupAllNodes(GroupId,res)
+    if err != nil {
+	fmt.Println("===============SignSendMsgToMsg.Run,send to group all nodes fail,error = %s ===================",err.Error())
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrSendDataToGroupFail)}
 	ch <- res
 	return false
