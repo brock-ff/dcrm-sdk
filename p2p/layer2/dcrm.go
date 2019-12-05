@@ -28,7 +28,7 @@ import (
 )
 
 // txs start
-func DcrmProtocol_sendToGroupOneNode(msg string) string {
+func DcrmProtocol_sendToGroupOneNode(msg string) (string, error) {
 	return discover.SendToGroup(discover.NodeID{}, msg, false, DcrmProtocol_type)
 }
 
@@ -187,7 +187,7 @@ func SendMsg(msg string) {
 	DcrmProtocol_broadcastInGroupOthers(msg)
 }
 
-func SendToDcrmGroupAllNodes(msg string) string {
+func SendToDcrmGroupAllNodes(msg string) (string, error) {
 	return discover.SendToGroup(discover.NodeID{}, msg, true, DcrmProtocol_type)
 }
 
@@ -222,31 +222,30 @@ func ParseNodeID(enode string) string {
 }
 
 //================   API   SDK    =====================
-func SdkProtocol_sendToGroupOneNode(gID, msg string) string {
+func SdkProtocol_sendToGroupOneNode(gID, msg string) (string, error) {
 	gid, _ := discover.HexID(gID)
 	return discover.SendToGroup(gid, msg, false, Sdkprotocol_type)
 }
 
-func SdkProtocol_SendToGroupAllNodes(gID, msg string) string {
+func SdkProtocol_SendToGroupAllNodes(gID, msg string) (string, error) {
 	gid, _ := discover.HexID(gID)
 	return discover.SendToGroup(gid, msg, true, Sdkprotocol_type)
 }
 
-func SdkProtocol_broadcastInGroupOthers(gID, msg string) { // without self
+func SdkProtocol_broadcastInGroupOthers(gID, msg string) (string, error) { // without self
 	gid, _ := discover.HexID(gID)
-	BroadcastToGroup(gid, msg, Sdkprotocol_type, false)
+	return BroadcastToGroup(gid, msg, Sdkprotocol_type, false)
 }
 
-func SdkProtocol_broadcastInGroupAll(gID, msg string) { // within self
+func SdkProtocol_broadcastInGroupAll(gID, msg string) (string, error) { // within self
 	gid, _ := discover.HexID(gID)
-	BroadcastToGroup(gid, msg, Sdkprotocol_type, true)
+	return BroadcastToGroup(gid, msg, Sdkprotocol_type, true)
 }
 
 func SdkProtocol_getGroup(gID string) (int, string) {
 	gid, _ := discover.HexID(gID)
 	return getGroup(gid, Sdkprotocol_type)
 }
-
 
 //  ---------------------   API  callback   ----------------------
 // recv from broadcastInGroup...

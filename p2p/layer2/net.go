@@ -58,7 +58,7 @@ var (
 	dccpGroup  *Group
 	xpGroup    *Group
 	selfid     discover.NodeID
-	sdkGroup   map[discover.NodeID]*Group = make(map[discover.NodeID]*Group)
+	SdkGroup   map[discover.NodeID]*Group = make(map[discover.NodeID]*Group)
 )
 
 type Dcrm struct {

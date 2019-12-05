@@ -324,7 +324,7 @@ func SendToGroupCC(toid NodeID, toaddr *net.UDPAddr, msg string, p2pType int) (s
 // the node has reply.
 func (t *udp) sendToGroupCC(toid NodeID, toaddr *net.UDPAddr, msg string, p2pType int) (string, error) {
        //log.Debug("====  (t *udp) sendToGroupCC()  ====", "p2pType", p2pType)
-       err := errors.New("")
+       var err error = nil
        retmsg := ""
        getCCPacket := getCCPacket(p2pType)
        number[0]++
@@ -360,7 +360,7 @@ func (t *udp) sendToGroupCC(toid NodeID, toaddr *net.UDPAddr, msg string, p2pTyp
                })
        } else {
                //log.Error("send, msg size > 1600, sent failed.\n")
-               return "send fail, msg size > 1600.", nil
+               return "", errors.New("send fail, msg size > 1600")
        }
        //errc := t.pending(toid, gotDcrmPacket, func(r interface{}) bool {
        //      fmt.Printf("dcrm, gotDcrmPacket: %+v\n", r)
@@ -475,12 +475,12 @@ func InitGroup(groupsNum, nodesNum int) error {
 	return nil
 }
 
-func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) string {
+func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) (string, error) {
 //	log.Debug("==== SendToGroup() ====", "p2pType", p2pType)
 	bn := Table4group.nursery[0]
 	if bn == nil {
 //		log.Warn("SendToGroup(), bootnode is nil\n")
-		return ""
+		return "", errors.New("SendToGroup, bootnode is nil")
 	}
 	ipa := &net.UDPAddr{IP: bn.IP, Port: int(bn.UDP)}
 	g := GetGroup(gid, bn.ID, ipa, bn.ID, p2pType)
@@ -488,11 +488,10 @@ func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) string {
 //	log.Debug("==== SendToGroup() ====", "GetGroup", g, "groupMemNum", groupMemNum)
 	if g == nil || len(g) != groupMemNum {
 //		log.Warn("SendToGroup(), group is nil\n")
-		return ""
+		return "", errors.New("SendToGroup(), group is nil or wrong len")
 	}
 	sent := make([]int, groupMemNum+1)
 	retMsg := ""
-	ret := ""
 	count := 0
 	pingErrorCount := 0
 	for i := 1; i <= groupMemNum; {
@@ -523,20 +522,27 @@ func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) string {
 			pingErrorCount += 1
 			if err != nil {
 //				log.Debug("sendToDcrmGroup, err", "group[", r, "]", g[r])
+				fmt.Printf("SendToGroup, ping(n.ID: %v, ipa: %v) error\n", n.ID, ipa)
+				retMsg = fmt.Sprintf("%v; SendToGroup, ping(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
 				continue
 			}
-			ret, err = Table4group.net.sendToGroupCC(n.ID, ipa, msg, p2pType)
+			_, err = Table4group.net.sendToGroupCC(n.ID, ipa, msg, p2pType)
+			if err != nil {
+				fmt.Printf("SendToGroup, sendToGroupCC(n.ID: %v, ipa: %v) error: %v\n", n.ID, ipa, err)
+				retMsg = fmt.Sprintf("%v; SendToGroup, sendToGroupCC(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
+			} else {
+				retMsg = fmt.Sprintf("%v; sendToGroupCC(n.ID: %v, ipa: %v) Success", retMsg, n.ID, ipa)
+			}
 		}
-		retMsg = fmt.Sprintf("%v, %s ", n.IP, ret)
 		count += 1
 		if allNodes == false {
 			break
 		}
 	}
 	if (allNodes == false && count == 1) || (allNodes == true && count == groupMemNum) {
-		return retMsg
+		return retMsg, nil
 	}
-	return "send fail."
+	return "", errors.New(retMsg)
 }
 
 func GetGroup(gid, id NodeID, addr *net.UDPAddr, target NodeID, p2pType int) []*Node {

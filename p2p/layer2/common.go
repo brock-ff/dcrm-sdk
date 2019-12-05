@@ -30,13 +30,13 @@ import (
 	"github.com/fsn-dev/dcrm-sdk/p2p/rlp"
 )
 
-func BroadcastToGroup(gid discover.NodeID, msg string, p2pType int, myself bool) {
+func BroadcastToGroup(gid discover.NodeID, msg string, p2pType int, myself bool) (string, error) {
 	emitter.Lock()
 	defer emitter.Unlock()
 
 	//log.Debug("==== BroadcastToGroup() ====\n")
 	if msg == "" || emitter == nil {
-		return
+		return "", errors.New("BroadcastToGroup msg is nil")
 	}
 	//log.Debug("BroadcastToGroup", "sendMsg", msg)
 	dccpGroupfail := NewGroup()
@@ -88,7 +88,7 @@ func BroadcastToGroup(gid discover.NodeID, msg string, p2pType int, myself bool)
 	var xvcGroup *Group
 	switch p2pType {
 	case Sdkprotocol_type:
-		if sdkGroup != nil {
+		if SdkGroup != nil {
 			_, xvcGroup = getGroupSDK(gid)
 	//		log.Debug("BroadcastToGroup", "gid", gid, "xvcGroup", gid, xvcGroup)
 			msgCode = Sdk_msgCode
@@ -107,7 +107,8 @@ func BroadcastToGroup(gid discover.NodeID, msg string, p2pType int, myself bool)
 		}
 		break
 	default:
-		return
+		e := fmt.Sprintf("BroadcastToGroup p2pType=%v is not exist", p2pType)
+		return "", errors.New(e)
 	}
 	//log.Debug("BroadcastToGroup", "group: ", xvcGroup)
 	failret := broatcast(xvcGroup, myself, true)
@@ -132,11 +133,14 @@ func BroadcastToGroup(gid discover.NodeID, msg string, p2pType int, myself bool)
 	//			log.Debug("BroatcastToGroupFail", "group: ", "success")
 			}
 		}()
+		e := fmt.Sprintf("BroadcastToGroup send failed nodecount=%v", failret)
+		return "", errors.New(e)
 	}
+	return "BroadcastToGroup send Success", nil
 }
 
 func getGroupSDK(gid discover.NodeID) (discover.NodeID, *Group) {
-	for id, g := range sdkGroup {
+	for id, g := range SdkGroup {
 		index := id.String()
 		gf := gid.String()
 	//	log.Debug("getGroupSDK", "id", id, "gid", gid)
@@ -251,7 +255,7 @@ func getGroup(gid discover.NodeID, p2pType int) (int, string) {
 	var xvcGroup *Group
 	switch p2pType {
 	case Sdkprotocol_type:
-		if sdkGroup != nil {
+		if SdkGroup != nil {
 			_, xvcGroup = getGroupSDK(gid)
 		//	log.Debug("BroadcastToGroup", "gid", gid, "xvcGroup", gid, xvcGroup)
 		}
@@ -299,10 +303,10 @@ func recvGroupInfo(gid discover.NodeID, req interface{}, p2pType int) {
 	case Sdkprotocol_type:
 		id, groupTmp := getGroupSDK(gid)
 		if groupTmp != nil {
-			delete(sdkGroup, id)
+			delete(SdkGroup, id)
 		}
 		groupTmp = NewGroup()
-		sdkGroup[gid] = groupTmp
+		SdkGroup[gid] = groupTmp
 		xvcGroup = groupTmp
 		break
 	case DcrmProtocol_type:
@@ -323,7 +327,7 @@ func recvGroupInfo(gid discover.NodeID, req interface{}, p2pType int) {
 		xvcGroup.group[node.ID.String()] = &group{id: node.ID, ip: node.IP, port: node.UDP, enode: enode.String()}
 	//	log.Debug("recvGroupInfo", "xvcGroup.group", xvcGroup.group[node.ID.String()])
 	}
-	//for i, g := range sdkGroup {
+	//for i, g := range SdkGroup {
 	//	log.Info("\nGroupInfo", "i", i, "g", g)
 	//}
 //	log.Debug("recvGroupInfo", "xvcGroup", xvcGroup)
