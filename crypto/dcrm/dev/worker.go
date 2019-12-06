@@ -43,9 +43,9 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  400 
-    sendtogroup_timeout = 400
-    ch_t = 100
+    sendtogroup_lilo_timeout =  600 
+    sendtogroup_timeout = 600
+    ch_t = 200
 
     //callback
     GetGroup func(string) (int,string)
@@ -1505,7 +1505,7 @@ func DisMsg(msg string) {
 		fmt.Println("=========Get All SHARE1===========","GroupId",w.groupid)
 		w.bshare1 <- true
 	    }
-	case "ZKFACTPROOF":
+	case "NTILDEH1H2":
 	    ///bug
 	    if w.msg_zkfact.Len() >= (NodeCnt-1) {
 		return
@@ -1517,7 +1517,7 @@ func DisMsg(msg string) {
 
 	    w.msg_zkfact.PushBack(msg)
 	    if w.msg_zkfact.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All ZKFACTPROOF===========","GroupId",w.groupid)
+		fmt.Println("=========Get All NTILDEH1H2===========","GroupId",w.groupid)
 		w.bzkfact <- true
 	    }
 	case "ZKUPROOF":

@@ -130,10 +130,18 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     //1. generate their own "partial" private key secretly
     u1 := GetRandomIntFromZn(secp256k1.S256().N)
+    u1Poly, u1PolyG, _ := lib.Vss2Init(u1, ThresHold)
 
     // 2. calculate "partial" public key, make "pritial" public key commiment to get (C,D)
     u1Gx, u1Gy := secp256k1.S256().ScalarBaseMult(u1.Bytes())
-    commitU1G := new(lib.Commitment).Commit(u1Gx, u1Gy)
+    u1Secrets := make([]*big.Int, 0)
+    u1Secrets = append(u1Secrets, u1Gx)
+    u1Secrets = append(u1Secrets, u1Gy)
+    for i := 1; i < len(u1PolyG.PolyG); i++ {
+	    u1Secrets = append(u1Secrets, u1PolyG.PolyG[i][0])
+	    u1Secrets = append(u1Secrets, u1PolyG.PolyG[i][1])
+    }
+    commitU1G := new(lib.Commitment).Commit(u1Secrets...)
 
     // 3. generate their own paillier public key and private key
     u1PaillierPk, u1PaillierSk := lib.GenerateKeyPair(PaillierKeyLength)
@@ -168,7 +176,8 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     ids := GetIds(cointype,GroupId)
 
-    u1PolyG, _, u1Shares, err := lib.Vss(u1, ids, ThresHold, NodeCnt)
+    u1Shares,err := u1Poly.Vss2(ids)
+    //u1PolyG, _, u1Shares, err := lib.Vss(u1, ids, ThresHold, NodeCnt)
     if err != nil {
 	res := RpcDcrmRes{Ret:"",Err:err}
 	ch <- res
@@ -201,10 +210,10 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 		mp := []string{msgprex,cur_enode}
 		enode := strings.Join(mp,"-")
 		s0 := "SHARE1"
-		s1 := strconv.Itoa(v.T) 
+		//s1 := strconv.Itoa(v.T) 
 		s2 := string(v.Id.Bytes()) 
 		s3 := string(v.Share.Bytes()) 
-		ss := enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3
+		ss := enode + Sep + s0 + Sep + s2 + Sep + s3
 		SendMsgToPeer(enodes,ss)
 		break
 	    }
@@ -226,9 +235,9 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	ss += Sep
     }
 
-    s2 = strconv.Itoa(u1PolyG.T)
-    s3 = strconv.Itoa(u1PolyG.N)
-    ss = ss + s2 + Sep + s3 + Sep
+    //s2 = strconv.Itoa(u1PolyG.T)
+    //s3 = strconv.Itoa(u1PolyG.N)
+    //ss = ss + s2 + Sep + s3 + Sep
 
     pglen := 2*(len(u1PolyG.PolyG))
     s4 = strconv.Itoa(pglen)
@@ -278,19 +287,19 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     }
     
     //var sstruct = make(map[string]*vss.ShareStruct)
-    var sstruct = make(map[string]*lib.ShareStruct)
+    var sstruct = make(map[string]*lib.ShareStruct2)
     for _,v := range shares {
 	mm := strings.Split(v, Sep)
 	//bug
-	if len(mm) < 5 {
+	if len(mm) < 4 {
 	    fmt.Println("===================!!! KeyGenerate_ec2,fill lib.ShareStruct map error. !!!==================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("fill lib.ShareStruct map error.")}
 	    ch <- res
 	    return false
 	}
 	//
-	t,_ := strconv.Atoi(mm[2])
-	ushare := &lib.ShareStruct{T:t,Id:new(big.Int).SetBytes([]byte(mm[3])),Share:new(big.Int).SetBytes([]byte(mm[4]))}
+	//t,_ := strconv.Atoi(mm[2])
+	ushare := &lib.ShareStruct2{Id:new(big.Int).SetBytes([]byte(mm[2])),Share:new(big.Int).SetBytes([]byte(mm[3]))}
 	prex := mm[0]
 	prexs := strings.Split(prex,"-")
 	sstruct[prexs[len(prexs)-1]] = ushare
@@ -320,42 +329,42 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	itmp++
     }
 
-    var upg = make(map[string]*lib.PolyGStruct)
+    var upg = make(map[string]*lib.PolyGStruct2)
     for _,v := range ds {
 	mm := strings.Split(v, Sep)
-	if len(mm) < (6+dlen) {
+	if len(mm) < (4+dlen) {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
 	    ch <- res
 	    return false
 	}
 
 	dlen,_ := strconv.Atoi(mm[2])
-	pglen,_ := strconv.Atoi(mm[3+dlen+2])
+	pglen,_ := strconv.Atoi(mm[3+dlen])
 	pglen = (pglen/2)
 	var pgss = make([][]*big.Int, 0)
 	l := 0
 	for j:=0;j<pglen;j++ {
 	    l++
 	    var gg = make([]*big.Int,0)
-	    if len(mm) < (6+dlen+l) {
+	    if len(mm) < (4+dlen+l) {
 		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
 		ch <- res
 		return false
 	    }
-	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[5+dlen+l])))
+	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[3+dlen+l])))
 	    l++
-	    if len(mm) < (6+dlen+l) {
+	    if len(mm) < (4+dlen+l) {
 		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_d1_1 data error")}
 		ch <- res
 		return false
 	    }
-	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[5+dlen+l])))
+	    gg = append(gg,new(big.Int).SetBytes([]byte(mm[3+dlen+l])))
 	    pgss = append(pgss,gg)
 	}
 
-	t,_ := strconv.Atoi(mm[3+dlen])
-	n,_ := strconv.Atoi(mm[4+dlen])
-	ps := &lib.PolyGStruct{T:t,N:n,PolyG:pgss}
+	//t,_ := strconv.Atoi(mm[3+dlen])
+	//n,_ := strconv.Atoi(mm[4+dlen])
+	ps := &lib.PolyGStruct2{PolyG:pgss}
 	prex := mm[0]
 	prexs := strings.Split(prex,"-")
 	upg[prexs[len(prexs)-1]] = ps
@@ -373,7 +382,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	    return false
 	}
 	//
-	if sstruct[en[0]].Verify(upg[en[0]]) == false {
+	if sstruct[en[0]].Verify2(upg[en[0]]) == false {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifySHARE1Fail)}
 	    ch <- res
 	    return false
@@ -544,7 +553,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     }
 
     sstmp := ss //////
-    tmp := ss
+    //tmp := ss
 
     ss = ss + "NULL"
 
@@ -552,24 +561,24 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     // ## add content: zk of paillier key, zk of u
     
     // zk of paillier key
-    u1zkFactProof := u1PaillierSk.ZkFactProve()
+    //u1zkFactProof := u1PaillierSk.ZkFactProve()
+    NtildeLength := 2048 
+    // for u1
+    u1NtildeH1H2 := lib.GenerateNtildeH1H2(NtildeLength)
     // zk of u
-    //u1zkUProof := schnorrZK.ZkUProve(u1)
     u1zkUProof := lib.ZkUProve(u1)
 
     // 7. Broadcast zk
     // u1zkFactProof, u2zkFactProof, u3zkFactProof, u4zkFactProof, u5zkFactProof
     mp = []string{msgprex,cur_enode}
     enode = strings.Join(mp,"-")
-    s0 = "ZKFACTPROOF"
-    s1 = string(u1zkFactProof.H1.Bytes())
-    s2 = string(u1zkFactProof.H2.Bytes())
-    s3 = string(u1zkFactProof.Y.Bytes())
-    s4 = string(u1zkFactProof.E.Bytes())
-    s5 = string(u1zkFactProof.N.Bytes())
-    ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3 + Sep + s4 + Sep + s5
+    s0 = "NTILDEH1H2"
+    s1 = string(u1NtildeH1H2.Ntilde.Bytes())
+    s2 = string(u1NtildeH1H2.H1.Bytes())
+    s3 = string(u1NtildeH1H2.H2.Bytes())
+    ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3
     SendMsgToDcrmGroup(ss,GroupId)
-    fmt.Println("=====================KeyGenerate_ec2,zkfactproof data size = %v =====================",len(ss))
+    fmt.Println("=====================KeyGenerate_ec2,ntildeh1h2 data size = %v =====================",len(ss))
 
     // 1. Receive Broadcast zk
     // u1zkFactProof, u2zkFactProof, u3zkFactProof, u4zkFactProof, u5zkFactProof
@@ -580,7 +589,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	return false 
     }
 
-    sstmp2 := s1 + SepSave + s2 + SepSave + s3 + SepSave + s4 + SepSave + s5
+    sstmp2 := s1 + SepSave + s2 + SepSave + s3
 
     // 8. Broadcast zk
     // u1zkUProof, u2zkUProof, u3zkUProof, u4zkUProof, u5zkUProof
@@ -620,7 +629,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	itmp++
     }
 
-    for k,id := range ids {
+    for _,id := range ids {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) { /////bug for save zkfact
@@ -628,28 +637,26 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	    continue
 	}
 
-	u1PaillierPk2 := GetPaillierPk(tmp,k)
+	//u1PaillierPk2 := GetPaillierPk(tmp,k)
 	for _,v := range zkfacts {
 	    mm := strings.Split(v, Sep)
 	    prex := mm[0]
 	    prexs := strings.Split(prex,"-")
 	    if prexs[len(prexs)-1] == en[0] {
-		h1 := new(big.Int).SetBytes([]byte(mm[2]))
-		h2 := new(big.Int).SetBytes([]byte(mm[3]))
-		y := new(big.Int).SetBytes([]byte(mm[4]))
-		e := new(big.Int).SetBytes([]byte(mm[5]))
-		n := new(big.Int).SetBytes([]byte(mm[6]))
-		zkFactProof := &lib.ZkFactProof{H1: h1, H2: h2, Y: y, E: e,N:n}
+		//h1 := new(big.Int).SetBytes([]byte(mm[2]))
+		//h2 := new(big.Int).SetBytes([]byte(mm[3]))
+		//ntilde := new(big.Int).SetBytes([]byte(mm[4]))
+		//zkFactProof := &lib.NtildeH1H2{Ntilde:ntilde,H1:h1,H2:h2}
 		///////
-		sstmp = sstmp + mm[2] + SepSave + mm[3] + SepSave + mm[4] + SepSave + mm[5] + SepSave + mm[6] + SepSave  ///for save zkfact
+		sstmp = sstmp + mm[2] + SepSave + mm[3] + SepSave + mm[4] + SepSave  ///for save zkfact
 		//////
 
-		if !u1PaillierPk2.ZkFactVerify(zkFactProof) {
-		    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyZKFACTPROOFFail)}
-		    ch <- res
+		//if !u1PaillierPk2.ZkFactVerify(zkFactProof) {
+		//    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyZKFACTPROOFFail)}
+		//    ch <- res
 	    
-		    return false 
-		}
+		//    return false 
+		//}
 
 		break
 	    }
@@ -697,6 +704,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     sstmp = sstmp + "NULL"
     //w.save <- sstmp
     //w.save:  sku1:UiSK:U1PK:U2PK:U3PK:....:UnPK:U1H1:U1H2:U1Y:U1E:U1N:U2H1:U2H2:U2Y:U2E:U2N:U3H1:U3H2:U3Y:U3E:U3N:......:NULL
+    //w.save:  sku1:UiSK.Len:UiSK.L:UiSK.U:U1PK.Len:U1PK.N:U1PK.G:U1PK.N2:U2PK.Len:U2PK.N:U2PK.G:U2PK.N2:....:UnPK.Len:UnPK.N:UnPK.G:UnPK.N2:U1Ntilde:U1H1:U1H2:U2Ntilde::U2H1:U2H2:......:UnNtilde:UnH1:UnH2:NULL
     w.save.PushBack(sstmp)
     return true
 }

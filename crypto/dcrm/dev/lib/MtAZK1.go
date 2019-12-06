@@ -76,7 +76,6 @@ func MtAZK1Prove(m *big.Int, r *big.Int, publicKey *PublicKey, zkFactProof *ZkFa
 	return mtAZK1Proof
 }
 
-//func (mtAZK1Proof *MtAZK1Proof) MtAZK1Verify(c *big.Int, publicKey *paillier.PublicKey, zkFactProof *paillier.ZkFactProof) bool {
 func (mtAZK1Proof *MtAZK1Proof) MtAZK1Verify(c *big.Int, publicKey *PublicKey, zkFactProof *ZkFactProof) bool {
 	if mtAZK1Proof.S1.Cmp(s256.S256().N3()) >= 0 {
 		return false

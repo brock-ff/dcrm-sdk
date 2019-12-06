@@ -1,0 +1,27 @@
+package lib 
+
+import (
+	"github.com/fsn-dev/dcrm-sdk/internal/common/math/random"
+	"math/big"
+)
+
+type NtildeH1H2 struct {
+	Ntilde *big.Int
+	H1     *big.Int
+	H2     *big.Int
+}
+
+func GenerateNtildeH1H2(length int) *NtildeH1H2 {
+
+	p := random.GetSafeRandomPrimeInt(length / 2)
+	q := random.GetSafeRandomPrimeInt(length / 2)
+
+	ntilde := new(big.Int).Mul(p, q)
+
+	h1 := random.GetRandomIntFromZnStar(ntilde)
+	h2 := random.GetRandomIntFromZnStar(ntilde)
+
+	ntildeH1H2 := &NtildeH1H2{Ntilde: ntilde, H1: h1, H2: h2}
+
+	return ntildeH1H2
+}

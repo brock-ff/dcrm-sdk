@@ -323,32 +323,32 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     }
 
     // 2.2 calculate zk(k)
-    var zk1proof = make(map[string]*lib.MtAZK1Proof)
-    var zkfactproof = make(map[string]*lib.ZkFactProof)
+    var zk1proof = make(map[string]*lib.MtAZK1Proof_nhh)
+    var zkfactproof = make(map[string]*lib.NtildeH1H2)
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	u1zkFactProof := GetZkFactProof(save,k)
 	if u1zkFactProof == nil {
 	    fmt.Println("=================Sign_ec2,u1zkFactProof is nil.=====================")
-	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get ntildeh1h2 fail")}
 	    ch <- res
 	    return ""
 	}
 
 	if len(en) == 0 || en[0] == "" {
 	    fmt.Println("=================Sign_ec2,get enode error,enodes = %s,uid = %v,cointype = %s,groupid = %s =====================",enodes,id,cointype,GroupId)
-	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get zkfactproof fail")}
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get ntildeh1h2 fail")}
 	    ch <- res
 	    return ""
 	}
 
 	zkfactproof[en[0]] = u1zkFactProof
 	if IsCurNode(enodes,cur_enode) {
-	    u1u1MtAZK1Proof := lib.MtAZK1Prove(u1K,ukc2[en[0]], ukc3[en[0]], u1zkFactProof)
+	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[en[0]], ukc3[en[0]], u1zkFactProof)
 	    zk1proof[en[0]] = u1u1MtAZK1Proof
 	} else {
-	    u1u1MtAZK1Proof := lib.MtAZK1Prove(u1K,ukc2[cur_enode], ukc3[cur_enode], u1zkFactProof)
+	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[cur_enode], ukc3[cur_enode], u1zkFactProof)
 	    mp := []string{msgprex,cur_enode}
 	    enode := strings.Join(mp,"-")
 	    s0 := "MTAZK1PROOF"
@@ -467,7 +467,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		s := new(big.Int).SetBytes([]byte(mm[5]))
 		s1 := new(big.Int).SetBytes([]byte(mm[6]))
 		s2 := new(big.Int).SetBytes([]byte(mm[7]))
-		mtAZK1Proof := &lib.MtAZK1Proof{Z: z, U: u, W: w, S: s, S1: s1, S2: s2}
+		mtAZK1Proof := &lib.MtAZK1Proof_nhh{Z: z, U: u, W: w, S: s, S1: s1, S2: s2}
 		zk1proof[en[0]] = mtAZK1Proof
 		break
 	    }
@@ -485,14 +485,16 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		return ""
 	    }
 
-	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
+	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify_nhh(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
 	    if !u1rlt1 {
+		fmt.Println("=============1111111111111111==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
 	    }
 	} else {
 	    if len(en) <= 0 {
+		fmt.Println("=============2222222222222222==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -500,6 +502,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit := zk1proof[en[0]]
 	    if exsit == false {
+		fmt.Println("=============33333333333333333333==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -507,6 +510,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit = ukc[en[0]]
 	    if exsit == false {
+		fmt.Println("=============444444444444444444444==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -514,6 +518,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    
 	    u1PaillierPk := GetPaillierPk(save,k)
 	    if u1PaillierPk == nil {
+		fmt.Println("=============555555555555==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -521,6 +526,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit = zkfactproof[cur_enode]
 	    if exsit == false {
+		fmt.Println("=================6666666666666666666==============")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -532,8 +538,9 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		return ""
 	    }
 
-	    u1rlt1 := zk1proof[en[0]].MtAZK1Verify(ukc[en[0]],u1PaillierPk,zkfactproof[cur_enode])
+	    u1rlt1 := zk1proof[en[0]].MtAZK1Verify_nhh(ukc[en[0]],u1PaillierPk,zkfactproof[cur_enode])
 	    if !u1rlt1 {
+		fmt.Println("=================7777777777==============")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -574,7 +581,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // 2.7
     // send c_kGamma to proper node, MtA(k, gamma)   zk
     var mkg = make(map[string]*big.Int)
-    var mkg_mtazk2 = make(map[string]*lib.MtAZK2Proof)
+    var mkg_mtazk2 = make(map[string]*lib.MtAZK2Proof_nhh)
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
@@ -595,7 +602,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    beta1U1StarCipher, u1BetaR1,_ := u1PaillierPk.Encrypt(betaU1Star[k])
 	    u1KGamma1Cipher = u1PaillierPk.HomoAdd(u1KGamma1Cipher, beta1U1StarCipher) // send to u1
-	    u1u1MtAZK2Proof := lib.MtAZK2Prove(u1Gamma, betaU1Star[k], u1BetaR1, ukc[cur_enode],ukc3[cur_enode], zkfactproof[cur_enode])
+	    u1u1MtAZK2Proof := lib.MtAZK2Prove_nhh(u1Gamma, betaU1Star[k], u1BetaR1, ukc[cur_enode],ukc3[cur_enode], zkfactproof[cur_enode])
 	    mkg[en[0]] = u1KGamma1Cipher
 	    mkg_mtazk2[en[0]] = u1u1MtAZK2Proof
 	    continue
@@ -617,7 +624,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	beta2U1StarCipher, u2BetaR1,_ := u2PaillierPk.Encrypt(betaU1Star[k])
 	u2KGamma1Cipher = u2PaillierPk.HomoAdd(u2KGamma1Cipher, beta2U1StarCipher) // send to u2
-	u2u1MtAZK2Proof := lib.MtAZK2Prove(u1Gamma, betaU1Star[k], u2BetaR1, ukc[en[0]],u2PaillierPk,zkfactproof[cur_enode])
+	u2u1MtAZK2Proof := lib.MtAZK2Prove_nhh(u1Gamma, betaU1Star[k], u2BetaR1, ukc[en[0]],u2PaillierPk,zkfactproof[cur_enode])
 	mp = []string{msgprex,cur_enode}
 	enode = strings.Join(mp,"-")
 	s0 = "MKG"
@@ -641,7 +648,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // 2.8
     // send c_kw to proper node, MtA(k, w)   zk
     var mkw = make(map[string]*big.Int)
-    var mkw_mtazk2 = make(map[string]*lib.MtAZK2Proof)
+    var mkw_mtazk2 = make(map[string]*lib.MtAZK3Proof_nhh)
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
@@ -662,7 +669,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    v1U1StarCipher, u1VR1,_ := u1PaillierPk.Encrypt(vU1Star[k])
 	    u1Kw1Cipher = u1PaillierPk.HomoAdd(u1Kw1Cipher, v1U1StarCipher) // send to u1
-	    u1u1MtAZK2Proof2 := lib.MtAZK2Prove(w1, vU1Star[k], u1VR1, ukc[cur_enode], ukc3[cur_enode], zkfactproof[cur_enode])
+	    u1u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u1VR1, ukc[cur_enode], ukc3[cur_enode], zkfactproof[cur_enode])
 	    mkw[en[0]] = u1Kw1Cipher
 	    mkw_mtazk2[en[0]] = u1u1MtAZK2Proof2
 	    continue
@@ -684,26 +691,30 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	v2U1StarCipher, u2VR1,_ := u2PaillierPk.Encrypt(vU1Star[k])
 	u2Kw1Cipher = u2PaillierPk.HomoAdd(u2Kw1Cipher,v2U1StarCipher) // send to u2
-	u2u1MtAZK2Proof2 := lib.MtAZK2Prove(w1, vU1Star[k], u2VR1, ukc[en[0]], u2PaillierPk, zkfactproof[cur_enode])
+	u2u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u2VR1, ukc[en[0]], u2PaillierPk, zkfactproof[cur_enode])
 
 	mp = []string{msgprex,cur_enode}
 	enode = strings.Join(mp,"-")
 	s0 = "MKW"
 	s1 = string(u2Kw1Cipher.Bytes()) 
 	//////
-	s2 := string(u2u1MtAZK2Proof2.Z.Bytes())
-	s3 := string(u2u1MtAZK2Proof2.ZBar.Bytes())
-	s4 := string(u2u1MtAZK2Proof2.T.Bytes())
-	s5 := string(u2u1MtAZK2Proof2.V.Bytes())
-	s6 := string(u2u1MtAZK2Proof2.W.Bytes())
-	s7 := string(u2u1MtAZK2Proof2.S.Bytes())
-	s8 := string(u2u1MtAZK2Proof2.S1.Bytes())
-	s9 := string(u2u1MtAZK2Proof2.S2.Bytes())
-	s10 := string(u2u1MtAZK2Proof2.T1.Bytes())
-	s11 := string(u2u1MtAZK2Proof2.T2.Bytes())
+	//bug
+	s2 := string(u2u1MtAZK2Proof2.Ux.Bytes())
+	s3 := string(u2u1MtAZK2Proof2.Uy.Bytes())
+	//bug
+	s4 := string(u2u1MtAZK2Proof2.Z.Bytes())
+	s5 := string(u2u1MtAZK2Proof2.ZBar.Bytes())
+	s6 := string(u2u1MtAZK2Proof2.T.Bytes())
+	s7 := string(u2u1MtAZK2Proof2.V.Bytes())
+	s8 := string(u2u1MtAZK2Proof2.W.Bytes())
+	s9 := string(u2u1MtAZK2Proof2.S.Bytes())
+	s10 := string(u2u1MtAZK2Proof2.S1.Bytes())
+	s11 := string(u2u1MtAZK2Proof2.S2.Bytes())
+	s12 := string(u2u1MtAZK2Proof2.T1.Bytes())
+	s13 := string(u2u1MtAZK2Proof2.T2.Bytes())
 	///////
 
-	ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3 + Sep + s4 + Sep + s5 + Sep + s6 + Sep + s7 + Sep + s8 + Sep + s9 + Sep + s10 + Sep + s11
+	ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3 + Sep + s4 + Sep + s5 + Sep + s6 + Sep + s7 + Sep + s8 + Sep + s9 + Sep + s10 + Sep + s11 + Sep + s12 + Sep + s13
 	SendMsgToPeer(enodes,ss)
     }
 
@@ -761,7 +772,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		s2 := new(big.Int).SetBytes([]byte(mm[10]))
 		t1 := new(big.Int).SetBytes([]byte(mm[11]))
 		t2 := new(big.Int).SetBytes([]byte(mm[12]))
-		mtAZK2Proof := &lib.MtAZK2Proof{Z: z, ZBar: zbar, T: t, V: v, W: w, S: s, S1: s1, S2: s2, T1: t1, T2: t2}
+		mtAZK2Proof := &lib.MtAZK2Proof_nhh{Z: z, ZBar: zbar, T: t, V: v, W: w, S: s, S1: s1, S2: s2, T1: t1, T2: t2}
 		mkg_mtazk2[en[0]] = mtAZK2Proof
 		break
 	    }
@@ -800,7 +811,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 	for _,v := range mkws {
 	    mm := strings.Split(v, Sep)
-	    if len(mm) < 13 {
+	    if len(mm) < 15 {
 		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_mkw fail")}
 		ch <- res
 		return ""
@@ -812,17 +823,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		kw := new(big.Int).SetBytes([]byte(mm[2]))
 		mkw[en[0]] = kw
 
-		z := new(big.Int).SetBytes([]byte(mm[3]))
-		zbar := new(big.Int).SetBytes([]byte(mm[4]))
-		t := new(big.Int).SetBytes([]byte(mm[5]))
-		v := new(big.Int).SetBytes([]byte(mm[6]))
-		w := new(big.Int).SetBytes([]byte(mm[7]))
-		s := new(big.Int).SetBytes([]byte(mm[8]))
-		s1 := new(big.Int).SetBytes([]byte(mm[9]))
-		s2 := new(big.Int).SetBytes([]byte(mm[10]))
-		t1 := new(big.Int).SetBytes([]byte(mm[11]))
-		t2 := new(big.Int).SetBytes([]byte(mm[12]))
-		mtAZK2Proof := &lib.MtAZK2Proof{Z: z, ZBar: zbar, T: t, V: v, W: w, S: s, S1: s1, S2: s2, T1: t1, T2: t2}
+		ux := new(big.Int).SetBytes([]byte(mm[3]))
+		uy := new(big.Int).SetBytes([]byte(mm[4]))
+		z := new(big.Int).SetBytes([]byte(mm[5]))
+		zbar := new(big.Int).SetBytes([]byte(mm[6]))
+		t := new(big.Int).SetBytes([]byte(mm[7]))
+		v := new(big.Int).SetBytes([]byte(mm[8]))
+		w := new(big.Int).SetBytes([]byte(mm[9]))
+		s := new(big.Int).SetBytes([]byte(mm[10]))
+		s1 := new(big.Int).SetBytes([]byte(mm[11]))
+		s2 := new(big.Int).SetBytes([]byte(mm[12]))
+		t1 := new(big.Int).SetBytes([]byte(mm[13]))
+		t2 := new(big.Int).SetBytes([]byte(mm[14]))
+		mtAZK2Proof := &lib.MtAZK3Proof_nhh{Ux:ux,Uy:uy,Z: z, ZBar: zbar, T: t, V: v, W: w, S: s, S1: s1, S2: s2, T1: t1, T2: t2}
 		mkw_mtazk2[en[0]] = mtAZK2Proof
 		break
 	    }
@@ -835,26 +848,30 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
 	if len(en) == 0 || en[0] == "" || mkg_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkg[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
+	    fmt.Println("==============1111111111111111=====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
 	}
 	//
-	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
+	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify_nhh(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt111 {
+	    fmt.Println("==============222222222222222=====================")
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMKGFail)}
 	    ch <- res
 	    return ""
 	}
 
 	if len(en) == 0 || en[0] == "" || mkw_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkw[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
+	    fmt.Println("==============3333333333333333=====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
 	}
 
-	rlt112 := mkw_mtazk2[en[0]].MtAZK2Verify(ukc[cur_enode], mkw[en[0]], ukc3[cur_enode], zkfactproof[en[0]])
+	rlt112 := mkw_mtazk2[en[0]].MtAZK3Verify_nhh(ukc[cur_enode], mkw[en[0]], ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt112 {
+	    fmt.Println("==============4444444444444====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
@@ -1527,25 +1544,23 @@ func GetPaillierSk(save string,index int) *lib.PrivateKey {
     return nil
 }
 
-func GetZkFactProof(save string,index int) *lib.ZkFactProof {
+func GetZkFactProof(save string,index int) *lib.NtildeH1H2 {
     if save == "" || index < 0 {
 	fmt.Println("===============GetZkFactProof,get zkfactproof error,save = %s,index = %v ==============",save,index)
 	return nil
     }
 
     mm := strings.Split(save, SepSave)
-    s := 4 + 4*NodeCnt + 5*index////????? TODO
-    if len(mm) < (s+5) {
+    s := 4 + 4*NodeCnt + 3*index////????? TODO
+    if len(mm) < (s+3) {
 	fmt.Println("===============GetZkFactProof,get zkfactproof error,save = %s,index = %v ==============",save,index)
 	return nil
     }
 
-    h1 := new(big.Int).SetBytes([]byte(mm[s]))
-    h2 := new(big.Int).SetBytes([]byte(mm[s+1]))
-    y := new(big.Int).SetBytes([]byte(mm[s+2]))
-    e := new(big.Int).SetBytes([]byte(mm[s+3]))
-    n := new(big.Int).SetBytes([]byte(mm[s+4]))
-    zkFactProof := &lib.ZkFactProof{H1: h1, H2: h2, Y: y, E: e,N: n}
+    ntilde := new(big.Int).SetBytes([]byte(mm[s]))
+    h1 := new(big.Int).SetBytes([]byte(mm[s+1]))
+    h2 := new(big.Int).SetBytes([]byte(mm[s+2]))
+    zkFactProof := &lib.NtildeH1H2{Ntilde:ntilde,H1: h1, H2: h2}
     return zkFactProof
 }
 
@@ -1673,21 +1688,22 @@ func DoubleHash(id string,keytype string) *big.Int {
     // Generate the random num
 
     // First, hash with the keccak256
-    keccak256 := sha3.NewKeccak256()
-    //keccak256.Write(rnd.Bytes())
-
-    keccak256.Write([]byte(id))
-
-    digestKeccak256 := keccak256.Sum(nil)
+    sha3256 := sha3.New256()
+    sha3256.Write([]byte(id))
+    digestKeccak256 := sha3256.Sum(nil)
 
     //second, hash with the SHA3-256
-    sha3256 := sha3.New256()
-
     sha3256.Write(digestKeccak256)
-
     digest := sha3256.Sum(nil)
     // convert the hash ([]byte) to big.Int
     digestBigInt := new(big.Int).SetBytes(digest)
+    zero,_ := new(big.Int).SetString("0",10)
+    if digestBigInt.Cmp(zero) == 0 {
+	sha3256.Write(digest)
+	digest = sha3256.Sum(nil)
+	digestBigInt = new(big.Int).SetBytes(digest)
+    }
+
     return digestBigInt
 }
 

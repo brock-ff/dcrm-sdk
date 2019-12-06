@@ -2,13 +2,13 @@ package random
 
 import (
 	"math/big"
-	"math/rand"
-	"time"
+	"fmt"
+	"crypto/rand"
 )
 
 func GetRandomInt(length int) *big.Int {
 	// NewInt allocates and returns a new Int set to x.
-	one := big.NewInt(1)
+	/*one := big.NewInt(1)
 	// Lsh sets z = x << n and returns z.
 	maxi := new(big.Int).Lsh(one, uint(length))
 
@@ -17,7 +17,15 @@ func GetRandomInt(length int) *big.Int {
 	// NewSource returns a new pseudo-random Source seeded with the given value.
 	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 	// Rand sets z to a pseudo-random number in [0, n) and returns z.
-	rndNum := new(big.Int).Rand(rnd, maxi)
+	rndNum := new(big.Int).Rand(rnd, maxi)*/
+	one := big.NewInt(1)
+	maxi := new(big.Int).Lsh(one, uint(length))
+	maxi = new(big.Int).Sub(maxi,one)
+	rndNum,err := rand.Int(rand.Reader,maxi)
+	if err != nil {
+	    return nil
+	}
+
 	return rndNum
 }
 
@@ -56,6 +64,29 @@ func GetRandomPrimeInt(length int) *big.Int {
 	for {
 		rndInt = GetRandomInt(length)
 		if rndInt.ProbablyPrime(512) {
+			break
+		}
+	}
+
+	return rndInt
+}
+
+func GetSafeRandomPrimeInt(length int) *big.Int {
+	var rndInt *big.Int
+	var err error
+	one := big.NewInt(1)
+	two := big.NewInt(2)
+
+	for {
+		rndInt, err = rand.Prime(rand.Reader, length-2)
+		if err != nil {
+			fmt.Println("Generate Safe Random Prime ERROR!")
+			break
+		}
+		rndInt = new(big.Int).Mul(rndInt, two)
+		rndInt = new(big.Int).Add(rndInt, one)
+		if rndInt.ProbablyPrime(512) {
+			fmt.Println("Success Generate Safe Random Prime.")
 			break
 		}
 	}
