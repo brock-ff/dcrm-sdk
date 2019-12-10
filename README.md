@@ -58,6 +58,10 @@ The `gdcrm` will provide two RPC APIs:
 
 The default RPC port is port 5559.
 
+Note: 
+1. If you want to call RPC API, please wait at least 2 minutes after running the node.
+2. If you want to call RPC API quickly more than once,please wait longer.
+
 # JSON RPC API
 
 #### dcrm_genPubkey
