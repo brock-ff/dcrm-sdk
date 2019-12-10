@@ -93,3 +93,4 @@ func GetSafeRandomPrimeInt(length int) *big.Int {
 
 	return rndInt
 }
+

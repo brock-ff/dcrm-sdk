@@ -24,6 +24,7 @@ import (
     "io"
     "os"
     "github.com/fsn-dev/dcrm-sdk/crypto/sha3"
+    "github.com/fsn-dev/dcrm-sdk/crypto/dcrm/dev/lib"
     "github.com/fsn-dev/dcrm-sdk/internal/common/hexutil"
     "runtime"
     "path/filepath"
@@ -145,6 +146,7 @@ func InitDev(groupId string) {
    ThresHold = peerscount
    Enode_cnts = peerscount //bug
     GetEnodesInfo()
+    go lib.GenRandomSafePrime(2048)
 }
 
 ////////////////////////dcrm///////////////////////////////
