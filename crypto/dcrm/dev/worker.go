@@ -43,9 +43,9 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  600 
-    sendtogroup_timeout = 600
-    ch_t = 200
+    sendtogroup_lilo_timeout =  800 
+    sendtogroup_timeout = 800
+    ch_t = 400
 
     //callback
     GetGroup func(string) (int,string)
@@ -224,6 +224,18 @@ type RpcReqWorker struct {
     msg_d11_1 *list.List
     splitmsg_d11_1 map[string]*list.List
     
+    msg_commitbigvab *list.List
+    splitmsg_commitbigvab map[string]*list.List
+    
+    msg_zkabproof *list.List
+    splitmsg_zkabproof map[string]*list.List
+    
+    msg_commitbigut *list.List
+    splitmsg_commitbigut map[string]*list.List
+    
+    msg_commitbigutd11 *list.List
+    splitmsg_commitbigutd11 map[string]*list.List
+    
     msg_s1 *list.List
     splitmsg_s1 map[string]*list.List
     
@@ -244,6 +256,10 @@ type RpcReqWorker struct {
     bzku chan bool
     bmtazk1proof chan bool
     bkc chan bool
+    bcommitbigvab chan bool
+    bzkabproof chan bool
+    bcommitbigut chan bool
+    bcommitbigutd11 chan bool
     bs1 chan bool
     bss1 chan bool
     bc11 chan bool
@@ -386,6 +402,14 @@ func NewRpcReqWorker(workerPool chan chan RpcReq) *RpcReqWorker {
     splitmsg_delta1:make(map[string]*list.List),
     msg_d11_1:list.New(),
     splitmsg_d11_1:make(map[string]*list.List),
+    msg_commitbigvab:list.New(),
+    splitmsg_commitbigvab:make(map[string]*list.List),
+    msg_zkabproof:list.New(),
+    splitmsg_zkabproof:make(map[string]*list.List),
+    msg_commitbigut:list.New(),
+    splitmsg_commitbigut:make(map[string]*list.List),
+    msg_commitbigutd11:list.New(),
+    splitmsg_commitbigutd11:make(map[string]*list.List),
     msg_s1:list.New(),
     splitmsg_s1:make(map[string]*list.List),
     msg_ss1:list.New(),
@@ -399,6 +423,10 @@ func NewRpcReqWorker(workerPool chan chan RpcReq) *RpcReqWorker {
     bd1_1:make(chan bool,1),
     bc11:make(chan bool,1),
     bkc:make(chan bool,1),
+    bcommitbigvab:make(chan bool,1),
+    bzkabproof:make(chan bool,1),
+    bcommitbigut:make(chan bool,1),
+    bcommitbigutd11:make(chan bool,1),
     bs1:make(chan bool,1),
     bss1:make(chan bool,1),
     bmkg:make(chan bool,1),
@@ -507,6 +535,26 @@ func (w *RpcReqWorker) Clear() {
         w.msg_d11_1.Remove(e)
     }
 
+    for e := w.msg_commitbigvab.Front(); e != nil; e = next {
+        next = e.Next()
+        w.msg_commitbigvab.Remove(e)
+    }
+
+    for e := w.msg_zkabproof.Front(); e != nil; e = next {
+        next = e.Next()
+        w.msg_zkabproof.Remove(e)
+    }
+
+    for e := w.msg_commitbigut.Front(); e != nil; e = next {
+        next = e.Next()
+        w.msg_commitbigut.Remove(e)
+    }
+
+    for e := w.msg_commitbigutd11.Front(); e != nil; e = next {
+        next = e.Next()
+        w.msg_commitbigutd11.Remove(e)
+    }
+
     for e := w.msg_s1.Front(); e != nil; e = next {
         next = e.Next()
         w.msg_s1.Remove(e)
@@ -566,6 +614,18 @@ func (w *RpcReqWorker) Clear() {
     }
     if len(w.bkc) == 1 {
 	<-w.bkc
+    }
+    if len(w.bcommitbigvab) == 1 {
+	<-w.bcommitbigvab
+    }
+    if len(w.bzkabproof) == 1 {
+	<-w.bzkabproof
+    }
+    if len(w.bcommitbigut) == 1 {
+	<-w.bcommitbigut
+    }
+    if len(w.bcommitbigutd11) == 1 {
+	<-w.bcommitbigutd11
     }
     if len(w.bs1) == 1 {
 	<-w.bs1
@@ -688,6 +748,10 @@ func (w *RpcReqWorker) Clear() {
     w.splitmsg_mtazk1proof = make(map[string]*list.List)
     w.splitmsg_c11 = make(map[string]*list.List)
     w.splitmsg_d11_1 = make(map[string]*list.List)
+    w.splitmsg_commitbigvab = make(map[string]*list.List)
+    w.splitmsg_zkabproof = make(map[string]*list.List)
+    w.splitmsg_commitbigut = make(map[string]*list.List)
+    w.splitmsg_commitbigutd11 = make(map[string]*list.List)
     w.splitmsg_s1 = make(map[string]*list.List)
     w.splitmsg_ss1 = make(map[string]*list.List)
 }
@@ -1640,6 +1704,66 @@ func DisMsg(msg string) {
 	    if w.msg_d11_1.Len() == (ThresHold-1) {
 		fmt.Println("=========Get All D11===========","GroupId",w.groupid)
 		w.bd11_1 <- true
+	    }
+	case "CommitBigVAB":
+	    ///bug
+	    if w.msg_commitbigvab.Len() >= (ThresHold-1) {
+		return
+	    }
+	    ///
+	    if Find(w.msg_commitbigvab,msg) {
+		return
+	    }
+
+	    w.msg_commitbigvab.PushBack(msg)
+	    if w.msg_commitbigvab.Len() == (ThresHold-1) {
+		fmt.Println("=========Get All CommitBigVAB===========","GroupId",w.groupid)
+		w.bcommitbigvab <- true
+	    }
+	case "ZKABPROOF":
+	    ///bug
+	    if w.msg_zkabproof.Len() >= (ThresHold-1) {
+		return
+	    }
+	    ///
+	    if Find(w.msg_zkabproof,msg) {
+		return
+	    }
+
+	    w.msg_zkabproof.PushBack(msg)
+	    if w.msg_zkabproof.Len() == (ThresHold-1) {
+		fmt.Println("=========Get All ZKABPROOF===========","GroupId",w.groupid)
+		w.bzkabproof <- true
+	    }
+	case "CommitBigUT":
+	    ///bug
+	    if w.msg_commitbigut.Len() >= (ThresHold-1) {
+		return
+	    }
+	    ///
+	    if Find(w.msg_commitbigut,msg) {
+		return
+	    }
+
+	    w.msg_commitbigut.PushBack(msg)
+	    if w.msg_commitbigut.Len() == (ThresHold-1) {
+		fmt.Println("=========Get All CommitBigUT===========","GroupId",w.groupid)
+		w.bcommitbigut <- true
+	    }
+	case "CommitBigUTD11":
+	    ///bug
+	    if w.msg_commitbigutd11.Len() >= (ThresHold-1) {
+		return
+	    }
+	    ///
+	    if Find(w.msg_commitbigutd11,msg) {
+		return
+	    }
+
+	    w.msg_commitbigutd11.PushBack(msg)
+	    if w.msg_commitbigutd11.Len() == (ThresHold-1) {
+		fmt.Println("=========Get All CommitBigUTD11===========","GroupId",w.groupid)
+		w.bcommitbigutd11 <- true
 	    }
 	case "S1":
 	    ///bug

@@ -1040,6 +1040,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	deltaSum = new(big.Int).Add(deltaSum,delta1s[en[0]])
     }
     deltaSum = new(big.Int).Mod(deltaSum, secp256k1.S256().N)
+    
+    u1GammaZKProof := lib.ZkUProve(u1Gamma)
 
     // 3. Broadcast
     // commitU1GammaG.D, commitU2GammaG.D, commitU3GammaG.D
@@ -1054,6 +1056,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	ss += string(d.Bytes())
 	ss += Sep
     }
+    ss += string(u1GammaZKProof.E.Bytes()) + Sep + string(u1GammaZKProof.S.Bytes()) + Sep
     ss = ss + "NULL"
     SendMsgToDcrmGroup(ss,GroupId)
 
@@ -1061,14 +1064,14 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // commitU1GammaG.D, commitU2GammaG.D, commitU3GammaG.D
     _,cherr = GetChannelValue(ch_t,w.bd11_1)
     if cherr != nil {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all c11 fail.")}
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all d11 fail.")}
 	ch <- res
 	return ""
     }
 
     d11s := make([]string,ThresHold-1)
     if w.msg_d11_1.Len() != (ThresHold-1) {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all c11 fail.")}
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all d11 fail.")}
 	ch <- res
 	return ""
     }
@@ -1145,6 +1148,19 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     deCommit_commitU1GammaG := &lib.Commitment{C: commitU1GammaG.C, D: commitU1GammaG.D}
     udecom[cur_enode] = deCommit_commitU1GammaG
+    
+    var zkuproof = make(map[string]*lib.ZkUProof)
+    zkuproof[cur_enode] = u1GammaZKProof 
+    for _,vv := range d11s {
+	mmm := strings.Split(vv, Sep)
+	prex2 := mmm[0]
+	prexs2 := strings.Split(prex2,"-")
+	dlen,_ := strconv.Atoi(mmm[2])
+	e := new(big.Int).SetBytes([]byte(mmm[3+dlen]))
+	s := new(big.Int).SetBytes([]byte(mmm[4+dlen]))
+	zkuf := &lib.ZkUProof{E: e, S: s}
+	zkuproof[prexs2[len(prexs2)-1]] = zkuf
+    }
 
     // for all nodes, verify the commitment
     for _,id := range idSign {
@@ -1185,6 +1201,11 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	_, u1GammaG := udecom[en[0]].DeCommit()
 	ug[en[0]] = u1GammaG
+	if lib.ZkUVerify(u1GammaG,zkuproof[en[0]]) == false {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify zkuproof fail.")}
+	    ch <- res
+	    return ""
+	}
     }
 
     // for all nodes, calculate the GammaGSum
@@ -1230,114 +1251,433 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     us1 := new(big.Int).Add(mk1, rSigma1)
     us1 = new(big.Int).Mod(us1, secp256k1.S256().N)
     
-    // 6. calculate S = s * R
-    S1x, S1y := secp256k1.S256().ScalarMult(deltaGammaGx, deltaGammaGy, us1.Bytes())
+    // *** Round 5A
+    l1 := GetRandomIntFromZn(secp256k1.S256().N)
+    rho1 := GetRandomIntFromZn(secp256k1.S256().N)
+
+    bigV1x, bigV1y := secp256k1.S256().ScalarMult(deltaGammaGx, deltaGammaGy, us1.Bytes())
+    l1Gx, l1Gy := secp256k1.S256().ScalarBaseMult(l1.Bytes())
+    bigV1x, bigV1y = secp256k1.S256().Add(bigV1x, bigV1y, l1Gx, l1Gy)
+
+    bigA1x, bigA1y := secp256k1.S256().ScalarBaseMult(rho1.Bytes())
+
+    l1rho1 := new(big.Int).Mul(l1, rho1)
+    l1rho1 = new(big.Int).Mod(l1rho1, secp256k1.S256().N)
+    bigB1x, bigB1y := secp256k1.S256().ScalarBaseMult(l1rho1.Bytes())
+
+    commitBigVAB1 := new(lib.Commitment).Commit(bigV1x, bigV1y, bigA1x, bigA1y, bigB1x, bigB1y)
     
-    // 7. Broadcast
-    // S: S1, S2, S3
     mp = []string{msgprex,cur_enode}
     enode = strings.Join(mp,"-")
-    s0 = "S1"
-    s1 = string(S1x.Bytes())
-    s2 := string(S1y.Bytes())
-    ss = enode + Sep + s0 + Sep + s1 + Sep + s2
+    s0 = "CommitBigVAB"
+    s1 = string(commitBigVAB1.C.Bytes())
+    ss = enode + Sep + s0 + Sep + s1
     SendMsgToDcrmGroup(ss,GroupId)
 
-    // 1. Receive Broadcast
-    // S: S1, S2, S3
-    _,cherr = GetChannelValue(ch_t,w.bs1)
+     _,cherr = GetChannelValue(ch_t,w.bcommitbigvab)
     if cherr != nil {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get s1 timeout.")}
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigVAB timeout.")}
 	ch <- res
 	return ""
     }
-
-    var s1s = make(map[string][]*big.Int)
-    s1ss := []*big.Int{S1x,S1y}
-    s1s[cur_enode] = s1ss
-
-    us1s := make([]string,ThresHold-1)
-    if w.msg_s1.Len() != (ThresHold-1) {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get s1 fail.")}
+    
+    commitbigvabs := make([]string,ThresHold-1)
+    if w.msg_commitbigvab.Len() != (ThresHold-1) {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigVAB fail.")}
 	ch <- res
 	return ""
     }
     itmp = 0
-    iter = w.msg_s1.Front()
+    iter = w.msg_commitbigvab.Front()
     for iter != nil {
 	mdss := iter.Value.(string)
-	us1s[itmp] = mdss 
+	commitbigvabs[itmp] = mdss 
 	iter = iter.Next()
 	itmp++
     }
+    
+    // *** Round 5B
+    u1zkABProof := lib.ZkABProve(rho1, l1, us1, []*big.Int{deltaGammaGx, deltaGammaGy})
+    
+    mp = []string{msgprex,cur_enode}
+    enode = strings.Join(mp,"-")
+    s0 = "ZKABPROOF"
+    dlen = len(commitBigVAB1.D)
+    s1 = strconv.Itoa(dlen)
 
-    for _,id := range idSign {
+    ss = enode + Sep + s0 + Sep + s1 + Sep
+    for _,d := range commitBigVAB1.D {
+	ss += string(d.Bytes())
+	ss += Sep
+    }
+    
+    dlen = len(u1zkABProof.Alpha)
+    s22 := strconv.Itoa(dlen)
+    ss += (s22 + Sep)
+    for _,alp := range u1zkABProof.Alpha {
+	ss += string(alp.Bytes())
+	ss += Sep
+    }
+    
+    dlen = len(u1zkABProof.Beta)
+    s3 := strconv.Itoa(dlen)
+    ss += (s3 + Sep)
+    for _,bet := range u1zkABProof.Beta {
+	ss += string(bet.Bytes())
+	ss += Sep
+    }
+
+    //ss = prex-enode:ZKABPROOF:dlen:d1:d2:...:dl:alplen:a1:a2:....aalp:betlen:b1:b2:...bbet:t:u:NULL
+    ss += (string(u1zkABProof.T.Bytes())+Sep+string(u1zkABProof.U.Bytes())+Sep)
+    ss = ss + "NULL"
+    SendMsgToDcrmGroup(ss,GroupId)
+
+     _,cherr = GetChannelValue(ch_t,w.bzkabproof)
+    if cherr != nil {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all ZKABPROOF timeout.")}
+	ch <- res
+	return ""
+    }
+    
+    zkabproofs := make([]string,ThresHold-1)
+    if w.msg_zkabproof.Len() != (ThresHold-1) {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all ZKABPROOF fail.")}
+	ch <- res
+	return ""
+    }
+    itmp = 0
+    iter = w.msg_zkabproof.Front()
+    for iter != nil {
+	mdss := iter.Value.(string)
+	zkabproofs[itmp] = mdss 
+	iter = iter.Next()
+	itmp++
+    }
+    
+    var commitbigcom = make(map[string]*lib.Commitment)
+    for _,v := range commitbigvabs {
+	mm := strings.Split(v, Sep)
+	if len(mm) < 3 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_commitbigvab fail.")}
+	    ch <- res
+	    return ""
+	}
+
+	prex := mm[0]
+	prexs := strings.Split(prex,"-")
+	for _,vv := range zkabproofs {
+	    mmm := strings.Split(vv, Sep)
+	    if len(mmm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_zkabproof fail.")}
+		ch <- res
+		return ""
+	    }
+
+	    prex2 := mmm[0]
+	    prexs2 := strings.Split(prex2,"-")
+	    if prexs[len(prexs)-1] == prexs2[len(prexs2)-1] {
+		dlen,_ := strconv.Atoi(mmm[2])
+		var gg = make([]*big.Int,0)
+		l := 0
+		for j:=0;j<dlen;j++ {
+		    l++
+		    if len(mmm) < (3+l) {
+			res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_zkabproof fail.")}
+			ch <- res
+			return ""
+		    }
+
+		    gg = append(gg,new(big.Int).SetBytes([]byte(mmm[2+l])))
+		}
+
+		deCommit := &lib.Commitment{C:new(big.Int).SetBytes([]byte(mm[2])), D:gg}
+		commitbigcom[prexs[len(prexs)-1]] = deCommit
+		break
+	    }
+	}
+    }
+
+    commitbigcom[cur_enode] = commitBigVAB1
+    
+    var zkabproofmap = make(map[string]*lib.ZkABProof)
+    zkabproofmap[cur_enode] = u1zkABProof
+
+    for _,vv := range zkabproofs {
+	mmm := strings.Split(vv, Sep)
+	prex2 := mmm[0]
+	prexs2 := strings.Split(prex2,"-")
+
+	//alpha
+	dlen,_ := strconv.Atoi(mmm[2])
+	alplen,_ := strconv.Atoi(mmm[3+dlen])
+	var alp = make([]*big.Int,0)
+	l := 0
+	for j:=0;j<alplen;j++ {
+	    l++
+	    if len(mmm) < (4+dlen+l) {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_zkabproof fail.")}
+		ch <- res
+		return ""
+	    }
+
+	    alp = append(alp,new(big.Int).SetBytes([]byte(mmm[3+dlen+l])))
+	}
+	
+	//beta
+	betlen,_ := strconv.Atoi(mmm[3+dlen+1+alplen])
+	var bet = make([]*big.Int,0)
+	l = 0
+	for j:=0;j<betlen;j++ {
+	    l++
+	    if len(mmm) < (5+dlen+alplen+l) {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_zkabproof fail.")}
+		ch <- res
+		return ""
+	    }
+
+	    bet = append(bet,new(big.Int).SetBytes([]byte(mmm[3+dlen+1+alplen+l])))
+	}
+
+	t := new(big.Int).SetBytes([]byte(mmm[3+dlen+1+alplen+1+betlen]))
+	u := new(big.Int).SetBytes([]byte(mmm[3+dlen+1+alplen+1+betlen+1]))
+
+	zkABProof := &lib.ZkABProof{Alpha: alp, Beta: bet, T: t, U: u}
+	zkabproofmap[prexs2[len(prexs2)-1]] = zkABProof
+    }
+
+    //BigVx,_ := new(big.Int).SetString("0",10)
+    //BigVy,_ := new(big.Int).SetString("0",10)
+    //BigVx,BigVy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
+
+    var BigVx,BigVy *big.Int
+    for k,id := range idSign {
+	enodes := GetEnodesByUid(id,cointype,GroupId)
+	en := strings.Split(string(enodes[8:]),"@")
+	if commitbigcom[en[0]].Verify() == false {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commitbigvab fail.")}
+	    ch <- res
+	    return ""
+	}
+	
+	_, BigVAB1 := commitbigcom[en[0]].DeCommit()
+	if lib.ZkABVerify([]*big.Int{BigVAB1[2], BigVAB1[3]}, []*big.Int{BigVAB1[4], BigVAB1[5]}, []*big.Int{BigVAB1[0], BigVAB1[1]}, []*big.Int{deltaGammaGx, deltaGammaGy}, zkabproofmap[en[0]]) == false {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify zkabproof fail.")}
+	    ch <- res
+	    return ""
+	}
+    
+	if k == 0 {
+	    BigVx = BigVAB1[0]
+	    BigVy = BigVAB1[1]
+	    continue
+	}
+	
+	BigVx, BigVy = secp256k1.S256().Add(BigVx, BigVy, BigVAB1[0], BigVAB1[1])
+    }
+
+    minusM := new(big.Int).Mul(big.NewInt(-1), mMtA)
+    minusM = new(big.Int).Mod(minusM, secp256k1.S256().N)
+
+    minusR := new(big.Int).Mul(big.NewInt(-1), deltaGammaGx)
+    minusR = new(big.Int).Mod(minusR, secp256k1.S256().N)
+
+    G_mY_rx, G_mY_ry := secp256k1.S256().ScalarBaseMult(minusM.Bytes())
+    Y_rx, Y_ry := secp256k1.S256().ScalarMult(pkx, pky, minusR.Bytes())
+    G_mY_rx, G_mY_ry = secp256k1.S256().Add(G_mY_rx, G_mY_ry, Y_rx, Y_ry)
+
+    VAllx, VAlly := secp256k1.S256().Add(G_mY_rx, G_mY_ry, BigVx, BigVy)
+    
+    // *** Round 5C
+    bigU1x, bigU1y := secp256k1.S256().ScalarMult(VAllx, VAlly, rho1.Bytes())
+    // bigA23 = bigA2 + bigA3
+    //bigT1x,_ := new(big.Int).SetString("0",10)
+    //bigT1y,_ := new(big.Int).SetString("0",10)
+    //bigT1x,bigT1y := secp256k1.S256().ScalarBaseMult(zero.Bytes())
+    var bigT1x,bigT1y *big.Int
+    var ind int
+    for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
 	}
 
-	for _,v := range us1s {
-	    mm := strings.Split(v, Sep)
-	    if len(mm) < 4 {
-		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_s1 fail.")}
+	_, BigVAB1 := commitbigcom[en[0]].DeCommit()
+	bigT1x = BigVAB1[2]
+	bigT1y = BigVAB1[3]
+	ind = k
+	break
+    }
+
+    for k,id := range idSign {
+	enodes := GetEnodesByUid(id,cointype,GroupId)
+	en := strings.Split(string(enodes[8:]),"@")
+	if IsCurNode(enodes,cur_enode) {
+	    continue
+	}
+
+	if k == ind {
+	    continue
+	}
+
+	_, BigVAB1 := commitbigcom[en[0]].DeCommit()
+	bigT1x, bigT1y = secp256k1.S256().Add(bigT1x,bigT1y,BigVAB1[2], BigVAB1[3])
+    }
+    bigT1x, bigT1y = secp256k1.S256().ScalarMult(bigT1x, bigT1y, l1.Bytes())
+
+    commitBigUT1 := new(lib.Commitment).Commit(bigU1x, bigU1y, bigT1x, bigT1y)
+    // Broadcast commitBigUT1.C
+    mp = []string{msgprex,cur_enode}
+    enode = strings.Join(mp,"-")
+    s0 = "CommitBigUT"
+    s1 = string(commitBigUT1.C.Bytes())
+    ss = enode + Sep + s0 + Sep + s1
+    SendMsgToDcrmGroup(ss,GroupId)
+
+     _,cherr = GetChannelValue(ch_t,w.bcommitbigut)
+    if cherr != nil {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigUT timeout.")}
+	ch <- res
+	return ""
+    }
+    
+    commitbiguts := make([]string,ThresHold-1)
+    if w.msg_commitbigut.Len() != (ThresHold-1) {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigUT fail.")}
+	ch <- res
+	return ""
+    }
+    itmp = 0
+    iter = w.msg_commitbigut.Front()
+    for iter != nil {
+	mdss := iter.Value.(string)
+	commitbiguts[itmp] = mdss 
+	iter = iter.Next()
+	itmp++
+    }
+    
+    // *** Round 5D
+
+    // Broadcast
+    // commitBigUT1.D,  commitBigUT2.D,  commitBigUT3.D
+    mp = []string{msgprex,cur_enode}
+    enode = strings.Join(mp,"-")
+    s0 = "CommitBigUTD11"
+    dlen = len(commitBigUT1.D)
+    s1 = strconv.Itoa(dlen)
+
+    ss = enode + Sep + s0 + Sep + s1 + Sep
+    for _,d := range commitBigUT1.D {
+	ss += string(d.Bytes())
+	ss += Sep
+    }
+    ss = ss + "NULL"
+    SendMsgToDcrmGroup(ss,GroupId)
+
+    _,cherr = GetChannelValue(ch_t,w.bcommitbigutd11)
+    if cherr != nil {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigUTD11 fail.")}
+	ch <- res
+	return ""
+    }
+
+    commitbigutd11s := make([]string,ThresHold-1)
+    if w.msg_commitbigutd11.Len() != (ThresHold-1) {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get all CommitBigUTD11 fail.")}
+	ch <- res
+	return ""
+    }
+
+    itmp = 0
+    iter = w.msg_commitbigutd11.Front()
+    for iter != nil {
+	mdss := iter.Value.(string)
+	commitbigutd11s[itmp] = mdss 
+	iter = iter.Next()
+	itmp++
+    }
+    
+    var commitbigutmap = make(map[string]*lib.Commitment)
+    for _,v := range commitbiguts {
+	mm := strings.Split(v, Sep)
+	if len(mm) < 3 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_commitbigut fail.")}
+	    ch <- res
+	    return ""
+	}
+
+	prex := mm[0]
+	prexs := strings.Split(prex,"-")
+	for _,vv := range commitbigutd11s {
+	    mmm := strings.Split(vv, Sep)
+	    if len(mmm) < 3 {
+		res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_commitbigutd11 fail.")}
 		ch <- res
 		return ""
 	    }
 
-	    prex := mm[0]
-	    prexs := strings.Split(prex,"-")
-	    if prexs[len(prexs)-1] == en[0] {
-		x := new(big.Int).SetBytes([]byte(mm[2]))
-		y := new(big.Int).SetBytes([]byte(mm[3]))
-		tmp := []*big.Int{x,y}
-		s1s[en[0]] = tmp
+	    prex2 := mmm[0]
+	    prexs2 := strings.Split(prex2,"-")
+	    if prexs[len(prexs)-1] == prexs2[len(prexs2)-1] {
+		dlen,_ := strconv.Atoi(mmm[2])
+		var gg = make([]*big.Int,0)
+		l := 0
+		for j:=0;j<dlen;j++ {
+		    l++
+		    if len(mmm) < (3+l) {
+			res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get msg_commitbigutd11 fail.")}
+			ch <- res
+			return ""
+		    }
+
+		    gg = append(gg,new(big.Int).SetBytes([]byte(mmm[2+l])))
+		}
+
+		deCommit := &lib.Commitment{C:new(big.Int).SetBytes([]byte(mm[2])), D:gg}
+		commitbigutmap[prexs[len(prexs)-1]] = deCommit
 		break
 	    }
 	}
     }
 
-    // 2. calculate SAll
-    var SAllx *big.Int
-    var SAlly *big.Int
-    for _,id := range idSign {
+    commitbigutmap[cur_enode] = commitBigUT1 
+
+    //bigTBx,bigTBy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
+    //bigUx,bigUy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
+//    bigTBx,_ := new(big.Int).SetString("0",10)
+  //  bigTBy,_ := new(big.Int).SetString("0",10)
+//    bigUx,_ := new(big.Int).SetString("0",10)
+//    bigUy,_ := new(big.Int).SetString("0",10)
+    var bigTBx,bigTBy *big.Int
+    var bigUx,bigUy *big.Int
+    for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
-	if len(en) == 0 || en[0] == "" || len(s1s) == 0 || s1s[en[0]] == nil || len(s1s[en[0]]) < 2 || (s1s[en[0]])[0] == nil || (s1s[en[0]])[1] == nil {
-	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("calculate SAllx/SAlly error.")}
+	if commitbigutmap[en[0]].Verify() == false {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit big ut fail.")}
 	    ch <- res
 	    return ""
 	}
 
-	SAllx = (s1s[en[0]])[0]
-	SAlly = (s1s[en[0]])[1]
-	break
-    }
-
-    for k,id := range idSign {
+	_, BigUT1 := commitbigutmap[en[0]].DeCommit()
+	_, BigVAB1 := commitbigcom[en[0]].DeCommit()
 	if k == 0 {
+	    bigTBx = BigUT1[2] 
+	    bigTBy = BigUT1[3] 
+	    bigUx = BigUT1[0] 
+	    bigUy = BigUT1[1] 
+	    bigTBx, bigTBy = secp256k1.S256().Add(bigTBx,bigTBy, BigVAB1[4], BigVAB1[5])
 	    continue
 	}
 
-	enodes := GetEnodesByUid(id,cointype,GroupId)
-	en := strings.Split(string(enodes[8:]),"@")
-	if SAllx == nil || SAlly == nil || len(en) == 0 || en[0] == "" || len(s1s) == 0 || s1s[en[0]] == nil || len(s1s[en[0]]) < 2 || (s1s[en[0]])[0] == nil || (s1s[en[0]])[1] == nil {
-	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("calculate SAllx/SAlly error.")}
-	    ch <- res
-	    return ""
-	}
-
-	SAllx, SAlly = secp256k1.S256().Add(SAllx, SAlly, (s1s[en[0]])[0],(s1s[en[0]])[1])
+	bigTBx, bigTBy = secp256k1.S256().Add(bigTBx,bigTBy,BigUT1[2], BigUT1[3])
+	bigTBx, bigTBy = secp256k1.S256().Add(bigTBx,bigTBy, BigVAB1[4], BigVAB1[5])
+	bigUx, bigUy = secp256k1.S256().Add(bigUx,bigUy,BigUT1[0], BigUT1[1])
     }
-	
-    // 3. verify SAll ?= m*G + r*PK
-    mMtAGx, mMtAGy := secp256k1.S256().ScalarBaseMult(mMtA.Bytes())
-    rMtAPKx, rMtAPKy := secp256k1.S256().ScalarMult(pkx, pky, deltaGammaGx.Bytes())
-    SAllComputex, SAllComputey := secp256k1.S256().Add(mMtAGx, mMtAGy, rMtAPKx, rMtAPKy)
 
-    if SAllx.Cmp(SAllComputex) != 0 || SAlly.Cmp(SAllComputey) != 0 {
-	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify SAll != m*G + r*PK in sign ec2.")}
+    if bigTBx.Cmp(bigUx) != 0 || bigTBy.Cmp(bigUy) != 0 {
+	fmt.Println("verify bigTB = BigU fails.")
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify bigTB = BigU fails.")}
 	ch <- res
 	return ""
     }
