@@ -19,17 +19,34 @@ package lib
 import (
 	"github.com/fsn-dev/dcrm-sdk/internal/common/math/random"
 	"math/big"
+	"time"
 )
 
 var (
     SafePrime = make(chan *big.Int, 1000)
+    RndInt = make(chan *big.Int, 1000)
 )
 
 func GenRandomSafePrime(length int) {
     for {
 	if len(SafePrime) < 1000 {
-	    p := random.GetSafeRandomPrimeInt(length/2)
-	    SafePrime <-p
+	    rndInt := <-RndInt
+	    p := random.GetSafeRandomPrimeInt2(length/2,rndInt)
+	    if p != nil {
+		SafePrime <-p
+		time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
+	    }
+	}
+    }
+}
+
+func GenRandomInt(length int) {
+    for {
+	if len(RndInt) < 1000 {
+	    p := random.GetSafeRandomInt(length/2)
+	    RndInt <-p
+	    
+	    time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
 	}
     }
 }
