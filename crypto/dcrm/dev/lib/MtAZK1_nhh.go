@@ -42,7 +42,7 @@ func MtAZK1Prove_nhh(m *big.Int, r *big.Int, publicKey *PublicKey, ntildeH1H2 *N
 	sha3256.Write(u.Bytes())
 	sha3256.Write(w.Bytes())
 
-	sha3256.Write(publicKey.N.Bytes())
+	sha3256.Write(publicKey.N.Bytes()) //MtAZK1 question 2
 
 	eBytes := sha3256.Sum(nil)
 	e := new(big.Int).SetBytes(eBytes)
@@ -64,7 +64,7 @@ func MtAZK1Prove_nhh(m *big.Int, r *big.Int, publicKey *PublicKey, ntildeH1H2 *N
 }
 
 func (mtAZKProof *MtAZK1Proof_nhh) MtAZK1Verify_nhh(c *big.Int, publicKey *PublicKey, ntildeH1H2 *NtildeH1H2) bool {
-	if mtAZKProof.S1.Cmp(s256.S256().N3()) >= 0 {
+	if mtAZKProof.S1.Cmp(s256.S256().N3()) >= 0 { //MtAZK1 question 1
 		return false
 	}
 
@@ -73,7 +73,7 @@ func (mtAZKProof *MtAZK1Proof_nhh) MtAZK1Verify_nhh(c *big.Int, publicKey *Publi
 	sha3256.Write(mtAZKProof.U.Bytes())
 	sha3256.Write(mtAZKProof.W.Bytes())
 
-	sha3256.Write(publicKey.N.Bytes())
+	sha3256.Write(publicKey.N.Bytes()) //MtAZK1 question 2
 
 	eBytes := sha3256.Sum(nil)
 	e := new(big.Int).SetBytes(eBytes)

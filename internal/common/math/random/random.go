@@ -6,6 +6,7 @@ import (
 	"crypto/rand"
 )
 
+//commitment question 2
 func GetRandomInt(length int) *big.Int {
 	// NewInt allocates and returns a new Int set to x.
 	/*one := big.NewInt(1)

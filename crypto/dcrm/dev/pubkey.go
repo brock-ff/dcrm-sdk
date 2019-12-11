@@ -130,8 +130,11 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     //1. generate their own "partial" private key secretly
     u1 := GetRandomIntFromZn(secp256k1.S256().N)
+
+    //Fusion_dcrm question 2
     u1Poly, u1PolyG, _ := lib.Vss2Init(u1, ThresHold)
 
+    //Fusion_dcrm question 2,also commit vss
     // 2. calculate "partial" public key, make "pritial" public key commiment to get (C,D)
     u1Gx, u1Gy := secp256k1.S256().ScalarBaseMult(u1.Bytes())
     u1Secrets := make([]*big.Int, 0)
@@ -176,6 +179,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     ids := GetIds(cointype,GroupId)
 
+    //Fusion_dcrm question 2
     u1Shares,err := u1Poly.Vss2(ids)
     //u1PolyG, _, u1Shares, err := lib.Vss(u1, ids, ThresHold, NodeCnt)
     if err != nil {
@@ -382,6 +386,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	    return false
 	}
 	//
+	//Fusion_dcrm question 2
 	if sstruct[en[0]].Verify2(upg[en[0]]) == false {
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifySHARE1Fail)}
 	    ch <- res
@@ -561,10 +566,10 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     // ## add content: zk of paillier key, zk of u
     
     // zk of paillier key
-    //u1zkFactProof := u1PaillierSk.ZkFactProve()
+    //u1zkFactProof := u1PaillierSk.ZkFactProve()  //question 1
     NtildeLength := 2048 
     // for u1
-    u1NtildeH1H2 := lib.GenerateNtildeH1H2(NtildeLength)
+    u1NtildeH1H2 := lib.GenerateNtildeH1H2(NtildeLength)  //question 2
     // zk of u
     u1zkUProof := lib.ZkUProve(u1)
 
@@ -572,7 +577,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     // u1zkFactProof, u2zkFactProof, u3zkFactProof, u4zkFactProof, u5zkFactProof
     mp = []string{msgprex,cur_enode}
     enode = strings.Join(mp,"-")
-    s0 = "NTILDEH1H2"
+    s0 = "NTILDEH1H2" //delete zkfactor add ntild h1 h2
     s1 = string(u1NtildeH1H2.Ntilde.Bytes())
     s2 = string(u1NtildeH1H2.H1.Bytes())
     s3 = string(u1NtildeH1H2.H2.Bytes())
@@ -651,6 +656,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 		sstmp = sstmp + mm[2] + SepSave + mm[3] + SepSave + mm[4] + SepSave  ///for save zkfact
 		//////
 
+		//question 1 ,delete zkfactor
 		//if !u1PaillierPk2.ZkFactVerify(zkFactProof) {
 		//    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyZKFACTPROOFFail)}
 		//    ch <- res

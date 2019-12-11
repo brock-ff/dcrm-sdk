@@ -332,6 +332,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
+	
+	//paillier question 2,delete zkfactor,add ntilde h1 h2
 	u1zkFactProof := GetZkFactProof(save,k)
 	if u1zkFactProof == nil {
 	    fmt.Println("=================Sign_ec2,u1zkFactProof is nil.=====================")
@@ -349,10 +351,10 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	zkfactproof[en[0]] = u1zkFactProof
 	if IsCurNode(enodes,cur_enode) {
-	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[en[0]], ukc3[en[0]], u1zkFactProof)
+	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[en[0]], ukc3[en[0]], u1zkFactProof) //paillier question 2
 	    zk1proof[en[0]] = u1u1MtAZK1Proof
 	} else {
-	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[cur_enode], ukc3[cur_enode], u1zkFactProof)
+	    u1u1MtAZK1Proof := lib.MtAZK1Prove_nhh(u1K,ukc2[cur_enode], ukc3[cur_enode], u1zkFactProof) //paillier question 2
 	    mp := []string{msgprex,cur_enode}
 	    enode := strings.Join(mp,"-")
 	    s0 := "MTAZK1PROOF"
@@ -489,6 +491,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 		return ""
 	    }
 
+	    //delete zkfactor,add ntilde h1 h2
 	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify_nhh(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
 	    if !u1rlt1 {
 		fmt.Println("=============1111111111111111==================")
@@ -555,7 +558,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // 2.6
     // select betaStar randomly, and calculate beta, MtA(k, gamma)
     // select betaStar randomly, and calculate beta, MtA(k, w)
-    
+   
+    //Fusion_dcrm question 4
     // [Notes]
     // 1. betaStar is in [1, paillier.N - secp256k1.N^2]
     NSalt := new(big.Int).Lsh(big.NewInt(1), uint(PaillierKeyLength-PaillierKeyLength/10))
@@ -606,6 +610,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    beta1U1StarCipher, u1BetaR1,_ := u1PaillierPk.Encrypt(betaU1Star[k])
 	    u1KGamma1Cipher = u1PaillierPk.HomoAdd(u1KGamma1Cipher, beta1U1StarCipher) // send to u1
+	    
+	    //delete zkfactor,add ntilde h1 h2
 	    u1u1MtAZK2Proof := lib.MtAZK2Prove_nhh(u1Gamma, betaU1Star[k], u1BetaR1, ukc[cur_enode],ukc3[cur_enode], zkfactproof[cur_enode])
 	    mkg[en[0]] = u1KGamma1Cipher
 	    mkg_mtazk2[en[0]] = u1u1MtAZK2Proof
@@ -673,7 +679,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    v1U1StarCipher, u1VR1,_ := u1PaillierPk.Encrypt(vU1Star[k])
 	    u1Kw1Cipher = u1PaillierPk.HomoAdd(u1Kw1Cipher, v1U1StarCipher) // send to u1
-	    u1u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u1VR1, ukc[cur_enode], ukc3[cur_enode], zkfactproof[cur_enode])
+	    u1u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u1VR1, ukc[cur_enode], ukc3[cur_enode], zkfactproof[cur_enode]) //Fusion_dcrm question 8
 	    mkw[en[0]] = u1Kw1Cipher
 	    mkw_mtazk2[en[0]] = u1u1MtAZK2Proof2
 	    continue
@@ -695,7 +701,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	v2U1StarCipher, u2VR1,_ := u2PaillierPk.Encrypt(vU1Star[k])
 	u2Kw1Cipher = u2PaillierPk.HomoAdd(u2Kw1Cipher,v2U1StarCipher) // send to u2
-	u2u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u2VR1, ukc[en[0]], u2PaillierPk, zkfactproof[cur_enode])
+	u2u1MtAZK2Proof2 := lib.MtAZK3Prove_nhh(w1, vU1Star[k], u2VR1, ukc[en[0]], u2PaillierPk, zkfactproof[cur_enode]) //Fusion_dcrm question 8
 
 	mp = []string{msgprex,cur_enode}
 	enode = strings.Join(mp,"-")
@@ -858,6 +864,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    return ""
 	}
 	//
+	//delete zkfactor,add ntilde h1 h2
 	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify_nhh(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt111 {
 	    fmt.Println("==============222222222222222=====================")
@@ -873,6 +880,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    return ""
 	}
 
+	//Fusion_dcrm question 8
 	rlt112 := mkw_mtazk2[en[0]].MtAZK3Verify_nhh(ukc[cur_enode], mkw[en[0]], ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt112 {
 	    fmt.Println("==============4444444444444====================")
@@ -1044,7 +1052,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	deltaSum = new(big.Int).Add(deltaSum,delta1s[en[0]])
     }
     deltaSum = new(big.Int).Mod(deltaSum, secp256k1.S256().N)
-    
+   
+    //Fusion_dcrm question 5
     u1GammaZKProof := lib.ZkUProve(u1Gamma)
 
     // 3. Broadcast
@@ -1205,7 +1214,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	_, u1GammaG := udecom[en[0]].DeCommit()
 	ug[en[0]] = u1GammaG
-	if lib.ZkUVerify(u1GammaG,zkuproof[en[0]]) == false {
+	if lib.ZkUVerify(u1GammaG,zkuproof[en[0]]) == false { //Fusion_dcrm question 5
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify zkuproof fail.")}
 	    ch <- res
 	    return ""
@@ -1254,7 +1263,8 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     rSigma1 := new(big.Int).Mul(deltaGammaGx, sigma1)
     us1 := new(big.Int).Add(mk1, rSigma1)
     us1 = new(big.Int).Mod(us1, secp256k1.S256().N)
-    
+   
+    //Fusion_dcrm question 7
     // *** Round 5A
     l1 := GetRandomIntFromZn(secp256k1.S256().N)
     rho1 := GetRandomIntFromZn(secp256k1.S256().N)
@@ -1646,12 +1656,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     commitbigutmap[cur_enode] = commitBigUT1 
 
-    //bigTBx,bigTBy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
-    //bigUx,bigUy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
-//    bigTBx,_ := new(big.Int).SetString("0",10)
-  //  bigTBy,_ := new(big.Int).SetString("0",10)
-//    bigUx,_ := new(big.Int).SetString("0",10)
-//    bigUy,_ := new(big.Int).SetString("0",10)
     var bigTBx,bigTBy *big.Int
     var bigUx,bigUy *big.Int
     for k,id := range idSign {
@@ -1888,6 +1892,7 @@ func GetPaillierSk(save string,index int) *lib.PrivateKey {
     return nil
 }
 
+//paillier question 2,delete zkfactor,add ntilde h1 h2
 func GetZkFactProof(save string,index int) *lib.NtildeH1H2 {
     if save == "" || index < 0 {
 	fmt.Println("===============GetZkFactProof,get zkfactproof error,save = %s,index = %v ==============",save,index)
@@ -2087,6 +2092,7 @@ func IsCurNode(enodes string,cur string) bool {
     return false
 }
 
+//commitment question 1,only use sha3-256
 func DoubleHash(id string,keytype string) *big.Int {
     // Generate the random num
 
@@ -2101,6 +2107,8 @@ func DoubleHash(id string,keytype string) *big.Int {
     // convert the hash ([]byte) to big.Int
     digestBigInt := new(big.Int).SetBytes(digest)
     zero,_ := new(big.Int).SetString("0",10)
+
+    //Fusion_dcrm question 1,check id != 0
     if digestBigInt.Cmp(zero) == 0 {
 	sha3256.Write(digest)
 	digest = sha3256.Sum(nil)

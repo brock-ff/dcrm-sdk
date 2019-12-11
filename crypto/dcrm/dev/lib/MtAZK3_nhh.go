@@ -69,12 +69,12 @@ func MtAZK3Prove_nhh(x *big.Int, y *big.Int, r *big.Int, c1 *big.Int, publicKey 
 	sha3256.Write(v.Bytes())
 	sha3256.Write(w.Bytes())
 
-	sha3256.Write(publicKey.N.Bytes())
+	sha3256.Write(publicKey.N.Bytes()) //MtAZK3 question 2
 
 	eBytes := sha3256.Sum(nil)
 	e := new(big.Int).SetBytes(eBytes)
 
-	e = new(big.Int).Mod(e, publicKey.N)
+	e = new(big.Int).Mod(e, publicKey.N) //MtAZK3 question 3
 
 	s := new(big.Int).Exp(r, e, publicKey.N)
 	s = new(big.Int).Mul(s, beta)
@@ -98,7 +98,7 @@ func MtAZK3Prove_nhh(x *big.Int, y *big.Int, r *big.Int, c1 *big.Int, publicKey 
 }
 
 func (mtAZK3Proof *MtAZK3Proof_nhh) MtAZK3Verify_nhh(c1 *big.Int, c2 *big.Int, publicKey *PublicKey, ntildeH1H2 *NtildeH1H2) bool {
-	if mtAZK3Proof.S1.Cmp(s256.S256().N3()) >= 0 {
+	if mtAZK3Proof.S1.Cmp(s256.S256().N3()) >= 0 { //MtAZK3 question 1
 		return false
 	}
 
@@ -111,7 +111,7 @@ func (mtAZK3Proof *MtAZK3Proof_nhh) MtAZK3Verify_nhh(c1 *big.Int, c2 *big.Int, p
 	sha3256.Write(mtAZK3Proof.V.Bytes())
 	sha3256.Write(mtAZK3Proof.W.Bytes())
 
-	sha3256.Write(publicKey.N.Bytes())
+	sha3256.Write(publicKey.N.Bytes()) //MtAZK3 question 2
 
 	eBytes := sha3256.Sum(nil)
 	e := new(big.Int).SetBytes(eBytes)

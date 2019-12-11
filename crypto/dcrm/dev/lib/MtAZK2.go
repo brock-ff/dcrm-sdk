@@ -108,7 +108,7 @@ func (mtAZK2Proof *MtAZK2Proof) MtAZK2Verify(c1 *big.Int, c2 *big.Int, publicKey
 	    return false
 	}
 
-	if mtAZK2Proof.S1.Cmp(s256.S256().N3()) >= 0 {
+	if mtAZK2Proof.S1.Cmp(s256.S256().N3()) >= 0 { //MtAZK2 question 1
 		return false
 	}
 
