@@ -91,6 +91,7 @@ func startP2pNode(c *cli.Context) error {
 			keyfile = fmt.Sprintf("node.key")
 		}
 		fmt.Printf("nodekey: %v\n", keyfile)
+		dcrm.KeyFile = keyfile
 		nodeKey, errkey := crypto.LoadECDSA(keyfile)
 		if errkey != nil {
 			nodeKey, _ = crypto.GenerateKey()
@@ -100,6 +101,20 @@ func startP2pNode(c *cli.Context) error {
 			kfd.WriteString(fmt.Sprintf("\nenode://%v\n", discover.PubkeyID(&nodeKey.PublicKey)))
 			kfd.Close()
 		}
+
+		///////test only
+		/*nid := discover.PubkeyID(&nodeKey.PublicKey)
+		s := nid.String()
+		b := nid.Bytes()
+		enode := fmt.Sprintf("%v",nid)
+		nid2,err := discover.HexID(enode)
+		enode2 := fmt.Sprintf("%v",nid2)
+		pub,err2 := nid2.Pubkey()
+		nid3 := discover.PubkeyID(pub)
+		s3 := nid3.String()
+		enode3 := fmt.Sprintf("%v",nid3)
+		fmt.Println("================gdcrm,s = %s,b len = %v,enode = %s,err =%v,enode2 = %s,s3 = %s,enode3 = %s==============",s,len(b),enode,err,enode2,s3,enode3)*/
+		////////////////
 
 		dcrm := layer2.DcrmNew(nil)
 		nodeserv := p2p.Server{

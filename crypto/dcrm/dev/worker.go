@@ -48,6 +48,8 @@ var (
     sendtogroup_timeout = 800
     ch_t = 400
 
+    KeyFile string
+
     //callback
     GetGroup func(string) (int,string)
     SendToGroupAllNodes func(string,string) (string,error)
@@ -134,7 +136,7 @@ func PutGroup(groupId string) bool {
     return true
 }
 
-func InitDev(groupId string) {
+func InitDev(keyfile string,groupId string) {
     cur_enode = GetSelfEnode()
     if !PutGroup(groupId) {
 	return
@@ -146,6 +148,7 @@ func InitDev(groupId string) {
    ThresHold = peerscount
    Enode_cnts = peerscount //bug
     GetEnodesInfo()
+    KeyFile = keyfile
     go lib.GenRandomSafePrime(2048)
 }
 
@@ -969,6 +972,12 @@ func (self *RecvMsg) Run(workid int,ch chan interface{}) bool {
 	return false 
     }
 
+    ////
+    msgdata,errdec := DecryptMsg(res) //for SendMsgToPeer
+    if errdec == nil {
+	res = msgdata
+    }
+    ////
     mm := strings.Split(res,Sep)
     if len(mm) >= 2 {
 	//msg:  hash-enode:C1:X1:X2
