@@ -18,6 +18,7 @@ package dev
 
 import (
     "fmt"
+    "time"
     "math/big"
     "github.com/syndtr/goleveldb/leveldb"
     "github.com/fsn-dev/dcrm-sdk/crypto/secp256k1"
@@ -80,28 +81,37 @@ func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
     save := iter.Value.(string)
 
     fmt.Println("=============================dcrm_liloreqAddress,write data to db start,worker id = %v =======================================",id)
-    lock.Lock()
-    //write db
-    dir := GetDbDir()
-    db, err := leveldb.OpenFile(dir, nil) 
-    if err != nil { 
-	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrCreateDbFail)}
-	ch <- res
-	lock.Unlock()
-	fmt.Println("=============================dcrm_liloreqAddress,terminal write data to db,worker id = %v =======================================",id)
-	return
-    }
-
-    pubkeyhex := hex.EncodeToString(ys)
-
+    
     s := []string{string(ys),save} ////fusionaddr ??
     ss := strings.Join(s,Sep)
-    db.Put(ys,[]byte(ss),nil)
-    db.Close()
-    lock.Unlock()
-    fmt.Println("=============================dcrm_liloreqAddress,write data to db end,worker id = %v =======================================",id)
+    kd := KeyData{Key:ys,Data:ss}
+    PubKeyData <-kd
+    pubkeyhex := hex.EncodeToString(ys)
     res := RpcDcrmRes{Ret:pubkeyhex,Err:nil}
     ch <- res
+}
+
+type KeyData struct {
+    Key []byte
+    Data string
+}
+
+func SavePubKeyDataToDb() {
+    for {
+	select {
+	case kd := <-PubKeyData:
+	    dir := GetDbDir()
+	    db, err := leveldb.OpenFile(dir, nil) 
+	    if err == nil {
+		db.Put(kd.Key,[]byte(kd.Data),nil)
+		db.Close()
+	    } else {
+		PubKeyData <-kd
+	    }
+	    
+	    time.Sleep(time.Duration(10000))  //na, 1 s = 10e9 na
+	}
+    }
 }
 
 //ec2

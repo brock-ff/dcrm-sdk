@@ -44,9 +44,9 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  800 
-    sendtogroup_timeout = 800
-    ch_t = 400
+    sendtogroup_lilo_timeout =  900 
+    sendtogroup_timeout = 900
+    ch_t = 500
 
     KeyFile string
 
@@ -57,6 +57,9 @@ var (
     BroadcastInGroupOthers func(string,string) (string,error)
     SendToPeer func(string,string) error
     ParseNode func(string) string
+    
+    PubKeyData = make(chan KeyData, 1000)
+    RpcReqQueueCache = make(chan RpcReq,RpcMaxQueue)
 )
 
 func RegP2pGetGroupCallBack(f func(string)(int,string)) {
@@ -151,13 +154,15 @@ func InitDev(keyfile string,groupId string) {
     KeyFile = keyfile
     go lib.GenRandomInt(2048)
     go lib.GenRandomSafePrime(2048)
+    go SavePubKeyDataToDb()
+    go CommitRpcReq()
 }
 
 ////////////////////////dcrm///////////////////////////////
 var (
     //rpc-req //dcrm node
     RpcMaxWorker = 1000 
-    RpcMaxQueue  = 1000
+    RpcMaxQueue  = 10000
     RpcReqQueue chan RpcReq 
     workers []*RpcReqWorker
     //rpc-req
@@ -1378,6 +1383,17 @@ func GetEnodesInfo() {
     cur_enode = GetSelfEnode()
 }
 
+func CommitRpcReq() {
+    for {
+	select {
+	case req := <-RpcReqQueueCache:
+	    RpcReqQueue <- req
+	}
+	
+	time.Sleep(time.Duration(1000000000))  //na, 1 s = 10e9 na /////////!!!!!fix bug:if large sign at same time,it will very slowly!!!!!
+    }
+}
+
 func SendReqToGroup(msg string,rpctype string) (string,error) {
     var req RpcReq
     switch rpctype {
@@ -1401,7 +1417,8 @@ func SendReqToGroup(msg string,rpctype string) (string,error) {
 	t = sendtogroup_timeout
     }
 
-    RpcReqQueue <- req
+    //RpcReqQueue <- req
+    RpcReqQueueCache <- req
     chret,cherr := GetChannelValue(t,req.ch)
     if cherr != nil {
 	fmt.Println("=========SendReqToGroup,get result,err = %s ============",cherr.Error())

@@ -52,7 +52,7 @@ func (this *Service) GenPubkey() map[string]interface{} {   //函数名首字母
     }
 
     var err error
-    for i:= 0;i<10;i++ {
+    for i:= 0;i<50;i++ {
 	pubkey,err := dcrm.SendReqToGroup(keytype,"rpc_req_dcrmaddr")
 	if err == nil && pubkey != "" {
 	    return map[string]interface{}{
@@ -93,7 +93,7 @@ func (this *Service) Sign(pubkey string,message string) map[string]interface{} {
     }
 
     var errtmp error
-    for i:=0;i<10;i++ {
+    for i:=0;i<50;i++ {
 	msg := pubkey + ":" + keytype + ":" + message
 	rsv,err := dcrm.SendReqToGroup(msg,"rpc_sign")
 	if err == nil && rsv != "" {
