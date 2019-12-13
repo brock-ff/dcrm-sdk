@@ -493,12 +493,12 @@ func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) (string, er
 	sent := make([]int, groupMemNum+1)
 	retMsg := ""
 	count := 0
-	pingErrorCount := 0
+	//pingErrorCount := 0
 	for i := 1; i <= groupMemNum; {
-		if pingErrorCount > groupMemNum * 5 {
-			fmt.Printf("ping timeout\n")
-			break
-		}
+		//if pingErrorCount > groupMemNum * 5 {
+		//	fmt.Printf("ping timeout\n")
+		//	break
+		//}
 		rand.Seed(time.Now().UnixNano())
 		r := rand.Intn(groupMemNum) % groupMemNum
 		j := 1
@@ -518,14 +518,14 @@ func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) (string, er
 			go SendToMyselfAndReturn(n.ID.String(), msg, p2pType)
 		} else {
 			ipa = &net.UDPAddr{IP: n.IP, Port: int(n.UDP)}
-			err := Table4group.net.ping(n.ID, ipa)
-			pingErrorCount += 1
-			if err != nil {
-//				log.Debug("sendToDcrmGroup, err", "group[", r, "]", g[r])
-				fmt.Printf("SendToGroup, ping(n.ID: %v, ipa: %v) error\n", n.ID, ipa)
-				retMsg = fmt.Sprintf("%v; SendToGroup, ping(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
-				continue
-			}
+			//err := Table4group.net.ping(n.ID, ipa)
+			//pingErrorCount += 1
+			//if err != nil {
+//			//	log.Debug("sendToDcrmGroup, err", "group[", r, "]", g[r])
+			//	fmt.Printf("SendToGroup, ping(n.ID: %v, ipa: %v) error\n", n.ID, ipa)
+			//	retMsg = fmt.Sprintf("%v; SendToGroup, ping(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
+			//	continue
+			//}
 			_, err = Table4group.net.sendToGroupCC(n.ID, ipa, msg, p2pType)
 			if err != nil {
 				fmt.Printf("SendToGroup, sendToGroupCC(n.ID: %v, ipa: %v) error: %v\n", n.ID, ipa, err)
