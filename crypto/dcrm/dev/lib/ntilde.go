@@ -13,8 +13,10 @@ type NtildeH1H2 struct {
 
 func GenerateNtildeH1H2(length int) *NtildeH1H2 {
 
-	p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
-	q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	//p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	//q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	p := SafePrime[2] //random.GetSafeRandomPrimeInt(length / 2)
+	q := SafePrime[3] //random.GetSafeRandomPrimeInt(length / 2)
 
 	ntilde := new(big.Int).Mul(p, q)
 

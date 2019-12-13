@@ -23,12 +23,23 @@ import (
 )
 
 var (
-    SafePrime = make(chan *big.Int, 1000)
+    //SafePrime = make(chan *big.Int, 1000)
+    SafePrime = make([]*big.Int, 4)
     RndInt = make(chan *big.Int, 1000)
 )
 
 func GenRandomSafePrime(length int) {
-    for {
+    p1 := random.GetSafeRandomPrimeInt(length/2)
+    SafePrime[0] = p1
+    p2 := random.GetSafeRandomPrimeInt(length/2)
+    SafePrime[1] = p2
+    p3 := random.GetSafeRandomPrimeInt(length/2)
+    SafePrime[2] = p3
+    p4 := random.GetSafeRandomPrimeInt(length/2)
+    SafePrime[3] = p4
+    return
+    
+    /*for {
 	if len(SafePrime) < 1000 {
 	    rndInt := <-RndInt
 	    p := random.GetSafeRandomPrimeInt2(length/2,rndInt)
@@ -37,10 +48,12 @@ func GenRandomSafePrime(length int) {
 		time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
 	    }
 	}
-    }
+    }*/
 }
 
 func GenRandomInt(length int) {
+    return //tmp
+
     for {
 	if len(RndInt) < 1000 {
 	    p := random.GetSafeRandomInt(length/2)
@@ -50,5 +63,4 @@ func GenRandomInt(length int) {
 	}
     }
 }
-
 

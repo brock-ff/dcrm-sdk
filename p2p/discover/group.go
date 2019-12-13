@@ -526,7 +526,7 @@ func SendToGroup(gid NodeID, msg string, allNodes bool, p2pType int) (string, er
 			//	retMsg = fmt.Sprintf("%v; SendToGroup, ping(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
 			//	continue
 			//}
-			_, err = Table4group.net.sendToGroupCC(n.ID, ipa, msg, p2pType)
+			_, err := Table4group.net.sendToGroupCC(n.ID, ipa, msg, p2pType)
 			if err != nil {
 				fmt.Printf("SendToGroup, sendToGroupCC(n.ID: %v, ipa: %v) error: %v\n", n.ID, ipa, err)
 				retMsg = fmt.Sprintf("%v; SendToGroup, sendToGroupCC(n.ID: %v, ipa: %v) error", retMsg, n.ID, ipa)
