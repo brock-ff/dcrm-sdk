@@ -158,6 +158,11 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 
     // 3. generate their own paillier public key and private key
     u1PaillierPk, u1PaillierSk := lib.GenerateKeyPair(PaillierKeyLength)
+    if u1PaillierPk == nil || u1PaillierSk == nil {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("gen paillier key pair fail")}
+	ch <- res
+	return false
+    }
 
     // 4. Broadcast
     // commitU1G.C, commitU2G.C, commitU3G.C, commitU4G.C, commitU5G.C
@@ -580,6 +585,12 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     NtildeLength := 2048 
     // for u1
     u1NtildeH1H2 := lib.GenerateNtildeH1H2(NtildeLength)  //question 2
+    if u1NtildeH1H2 == nil {
+	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("gen ntilde h1 h2 fail.")}
+	ch <- res
+	return false 
+    }
+
     // zk of u
     u1zkUProof := lib.ZkUProve(u1)
 

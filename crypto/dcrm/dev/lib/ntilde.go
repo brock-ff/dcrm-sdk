@@ -3,6 +3,7 @@ package lib
 import (
 	"github.com/fsn-dev/dcrm-sdk/internal/common/math/random"
 	"math/big"
+	"fmt"
 )
 
 type NtildeH1H2 struct {
@@ -17,6 +18,10 @@ func GenerateNtildeH1H2(length int) *NtildeH1H2 {
 	//q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
 	p := SafePrime[2] //random.GetSafeRandomPrimeInt(length / 2)
 	q := SafePrime[3] //random.GetSafeRandomPrimeInt(length / 2)
+	fmt.Println("=============GenerateNtildeH1H2,p = %v,q =%v=================",p,q)
+	if p == nil || q == nil {
+	    return nil
+	}
 
 	ntilde := new(big.Int).Mul(p, q)
 

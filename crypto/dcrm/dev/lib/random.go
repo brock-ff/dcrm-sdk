@@ -20,23 +20,29 @@ import (
 	"github.com/fsn-dev/dcrm-sdk/internal/common/math/random"
 	"math/big"
 	"time"
+	"fmt"
 )
 
 var (
     //SafePrime = make(chan *big.Int, 1000)
-    SafePrime = make([]*big.Int, 4)
+    SafePrime = make([]*big.Int, 0)
     RndInt = make(chan *big.Int, 1000)
 )
 
 func GenRandomSafePrime(length int) {
     p1 := random.GetSafeRandomPrimeInt(length/2)
-    SafePrime[0] = p1
+    //SafePrime[0] = p1
+    SafePrime = append(SafePrime,p1)
     p2 := random.GetSafeRandomPrimeInt(length/2)
-    SafePrime[1] = p2
+    //SafePrime[1] = p2
+    SafePrime = append(SafePrime,p2)
     p3 := random.GetSafeRandomPrimeInt(length/2)
-    SafePrime[2] = p3
+    //SafePrime[2] = p3
+    SafePrime = append(SafePrime,p3)
     p4 := random.GetSafeRandomPrimeInt(length/2)
-    SafePrime[3] = p4
+    //SafePrime[3] = p4
+    SafePrime = append(SafePrime,p4)
+    fmt.Println("==============GenRandomSafePrime,p1 =%v,p2 =%v,p3 =%v,p4 =%v ================",p1,p2,p3,p4)
     return
     
     /*for {
