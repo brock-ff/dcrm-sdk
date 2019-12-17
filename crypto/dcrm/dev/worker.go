@@ -44,9 +44,9 @@ var (
     SepDel = "dcrmsepdel"
 
     PaillierKeyLength = 2048
-    sendtogroup_lilo_timeout =  900 
-    sendtogroup_timeout = 900
-    ch_t = 500
+    sendtogroup_lilo_timeout = 200 
+    sendtogroup_timeout = 200
+    ch_t = 100
 
     KeyFile string
 
