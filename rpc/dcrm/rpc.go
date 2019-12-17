@@ -220,6 +220,8 @@ func startRpcServer() error {
 	    go rpc.NewHTTPServer(cors, vhosts, rpc.DefaultHTTPTimeouts,server).Serve(listener)
 	    rpcstring := "\n==================== RPC Service Already Start! url = " + fmt.Sprintf("http://%s", endpoint) + " =====================\n"
 	    fmt.Println(rpcstring)
+	    
+	    go dcrm.GenRandomSafePrime(2048)
 
 	    exit := make(chan int)
 	    <-exit

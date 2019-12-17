@@ -152,10 +152,14 @@ func InitDev(keyfile string,groupId string) {
    Enode_cnts = peerscount //bug
     GetEnodesInfo()
     KeyFile = keyfile
-    go lib.GenRandomInt(2048)
-    go lib.GenRandomSafePrime(2048)
+    //go lib.GenRandomInt(2048)
+    //go lib.GenRandomSafePrime(2048)
     go SavePubKeyDataToDb()
     go CommitRpcReq()
+}
+
+func GenRandomSafePrime(length int) {
+    lib.GenRandomSafePrime(length)
 }
 
 ////////////////////////dcrm///////////////////////////////

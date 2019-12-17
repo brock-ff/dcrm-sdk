@@ -16,6 +16,10 @@ func GenerateNtildeH1H2(length int) *NtildeH1H2 {
 
 	//p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
 	//q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	if len(SafePrime) < 4 {
+	    return nil
+	}
+
 	p := SafePrime[2] //random.GetSafeRandomPrimeInt(length / 2)
 	q := SafePrime[3] //random.GetSafeRandomPrimeInt(length / 2)
 	fmt.Println("=============GenerateNtildeH1H2,p = %v,q =%v=================",p,q)

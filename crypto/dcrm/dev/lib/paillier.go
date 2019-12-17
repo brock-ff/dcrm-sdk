@@ -46,6 +46,10 @@ func GenerateKeyPair(length int) (*PublicKey, *PrivateKey) {
 
 	//p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
 	//q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	if len(SafePrime) < 2 {
+	    return nil,nil
+	}
+
 	p := SafePrime[0] //random.GetSafeRandomPrimeInt(length / 2)
 	q := SafePrime[1] //random.GetSafeRandomPrimeInt(length / 2)
 	fmt.Println("=============GenerateKeyPair,p = %v,q =%v=================",p,q)

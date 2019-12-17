@@ -109,5 +109,10 @@ func SetUpMsgList(msg string) {
 	return
     }
 }
+
+func GenRandomSafePrime(length int) {
+    dev.GenRandomSafePrime(length)
+}
+
 //==========================================================
 
