@@ -165,7 +165,7 @@ func GenRandomSafePrime(length int) {
 ////////////////////////dcrm///////////////////////////////
 var (
     //rpc-req //dcrm node
-    RpcMaxWorker = 5000 
+    RpcMaxWorker = 2000 
     RpcMaxQueue  = 10000
     RpcReqQueue chan RpcReq 
     workers []*RpcReqWorker

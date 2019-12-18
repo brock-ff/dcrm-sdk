@@ -737,6 +737,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -798,6 +805,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -838,6 +852,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // 2.11 verify zk
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
 	if len(en) == 0 || en[0] == "" || mkg_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkg[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
@@ -875,6 +896,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var index int
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	if IsCurNode(enodes,cur_enode) {
 	    index = k
 	    break
@@ -891,6 +919,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     alpha1 := make([]*big.Int,ThresHold)
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	alpha1U1, _ := u1PaillierSk.Decrypt(mkg[en[0]])
 	alpha1[k] = alpha1U1
@@ -902,6 +937,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     uu1 := make([]*big.Int,ThresHold)
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	u1U1, _ := u1PaillierSk.Decrypt(mkw[en[0]])
 	uu1[k] = u1U1
@@ -976,6 +1018,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -1009,6 +1058,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var deltaSum *big.Int
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	deltaSum = delta1s[en[0]]
 	break
@@ -1019,6 +1075,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
 	if deltaSum == nil || len(en) < 1 || en[0] == "" || delta1s[en[0]] == nil {
@@ -1157,6 +1220,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // for all nodes, verify the commitment
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
 	if len(en) <= 0 || en[0] == "" {
@@ -1190,6 +1260,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var ug = make(map[string][]*big.Int)
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	_, u1GammaG := udecom[en[0]].DeCommit()
 	ug[en[0]] = u1GammaG
@@ -1205,6 +1282,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var GammaGSumy *big.Int
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	GammaGSumx = (ug[en[0]])[0]
 	GammaGSumy = (ug[en[0]])[1]
@@ -1217,6 +1301,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	GammaGSumx, GammaGSumy = secp256k1.S256().Add(GammaGSumx, GammaGSumy, (ug[en[0]])[0],(ug[en[0]])[1])
     }
@@ -1441,6 +1532,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var BigVx,BigVy *big.Int
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if commitbigcom[en[0]].Verify() == false {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commitbigvab fail.")}
@@ -1483,6 +1581,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var ind int
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -1497,6 +1602,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -1632,6 +1744,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var bigUx,bigUy *big.Int
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if commitbigutmap[en[0]].Verify() == false {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify commit big ut fail.")}
@@ -1700,6 +1819,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	if IsCurNode(enodes,cur_enode) {
 	    continue
@@ -1727,6 +1853,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     var sSum *big.Int
     for _,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 	sSum = ss1s[en[0]]
 	break
@@ -1738,6 +1871,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	}
 
 	enodes := GetEnodesByUid(id,cointype,GroupId)
+	////////bug
+	if len(enodes) < 9 {
+	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get enodes error")}
+	    ch <- res
+	    return ""
+	}
+	////////
 	en := strings.Split(string(enodes[8:]),"@")
 
 	//bug
