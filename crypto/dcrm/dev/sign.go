@@ -37,7 +37,7 @@ import (
 )
 
 func validate_lockout(wsid string,pubkey string,keytype string,message string,ch chan interface{}) {
-    fmt.Println("========validate_lockout============")
+    fmt.Println("========validate_lockout,Nonce =%s============",wsid)
     lock5.Lock()
     pub, err := hex.DecodeString(pubkey)
     if err != nil {
@@ -52,7 +52,7 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
     ////////
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
-	fmt.Println("===========validate_lockout,open db fail.dir = %s,err = %v,pubkey = %s,cointpe = %s=============",dir,err,pubkey,keytype)
+	fmt.Println("===========validate_lockout,open db fail.Nonce =%s,dir = %s,err = %v,pubkey = %s,cointype = %s=============",wsid,dir,err,pubkey,keytype)
         res := RpcDcrmRes{Ret:"",Err:err}
         ch <- res
         lock5.Unlock()
@@ -76,7 +76,6 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
     iter.Release()
     ///////
     if data == "" {
-	fmt.Println("===========validate_lockout,get generate save data fail.=============")
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail.")}
 	ch <- res
 	db.Close()
@@ -88,7 +87,6 @@ func validate_lockout(wsid string,pubkey string,keytype string,message string,ch
 
     realdcrmpubkey := hex.EncodeToString([]byte(datas[0]))
     if !strings.EqualFold(realdcrmpubkey,pubkey) {
-	fmt.Println("============validate_lockout,pubkey = %s,realdcrmpubkey = %s ==============",pubkey,realdcrmpubkey)
         res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("pubkey check fail")}
         ch <- res
         db.Close()
@@ -121,20 +119,19 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     GetEnodesInfo() 
     
     if int32(Enode_cnts) != int32(NodeCnt) {
-	fmt.Println("============the net group is not ready.please try again.================")
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("group not ready.")}
 	ch <- res
 	return ""
     }
 
-    fmt.Println("===================!!!Start!!!====================")
+    fmt.Println("===================dcrm_sign,Nonce =%s====================",msgprex)
 
     lock.Lock()
     //db
     dir := GetDbDir()
     db, err := leveldb.OpenFile(dir, nil) 
     if err != nil { 
-	fmt.Println("===========dcrm_sign,open db fail.dir = %s,err = %v,pubkey = %s,cointpe = %s=============",dir,err,pubkey,cointype)
+	fmt.Println("===========dcrm_sign,open db fail.Nonce =%s,dir = %s,err = %v,pubkey = %s,cointype = %s=============",dir,err,pubkey,cointype)
         res := RpcDcrmRes{Ret:"",Err:err}
         ch <- res
         lock.Unlock()
@@ -144,7 +141,6 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     //
     pub,err := hex.DecodeString(pubkey)
     if err != nil {
-	fmt.Println("============dcrm_sign,pubkey = %s,err = %s ==============",pubkey,err.Error())
 	res := RpcDcrmRes{Ret:"",Err:err}
 	ch <- res
 	db.Close()
@@ -169,7 +165,6 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
     iter.Release()
     
     if data == "" {
-	fmt.Println("===========dcrm_sign,get generate save data fail.=============")
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail.")}
 	ch <- res
 	db.Close()
@@ -179,7 +174,6 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
 
     datas := strings.Split(string(data),Sep)
     save := datas[1]
-    fmt.Println("==================dcrm_sign,datas len = %v,save = %s =======================",len(datas),save)
     
     dcrmpub := datas[0]
     dcrmpks := []byte(dcrmpub)
@@ -195,7 +189,6 @@ func dcrm_sign(msgprex string,sig string,txhash string,pubkey string,cointype st
 
     w,err := FindWorker(msgprex)
     if w == nil || err != nil {
-	fmt.Println("===========dcrm_sign,get worker fail.=============")
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("no find worker.")}
 	ch <- res
 	return ""
@@ -215,7 +208,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     }
     w := workers[id]
     GroupId := w.groupid
-    fmt.Println("========Sign_ec2============","GroupId",GroupId)
+    fmt.Println("================ Sign_ec2,Nonce =%s,GroupId = %s =============",msgprex,GroupId)
     if GroupId == "" {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get group id fail.")}
 	ch <- res
@@ -224,7 +217,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     
     hashBytes, err2 := hex.DecodeString(message)
     if err2 != nil {
-	fmt.Println("===============Sign_ec2,decode string err = %s=================",err2.Error())
 	res := RpcDcrmRes{Ret:"",Err:err2}
 	ch <- res
 	return ""
@@ -265,7 +257,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     
     mm := strings.Split(save, SepSave)
     if len(mm) == 0 {
-	fmt.Println("=============Sign_ec2,get save data fail. save = %s,sep = %s ================",save,SepSave)
+	fmt.Println("=============Sign_ec2,get save data fail. Nonce =%s,save = %s,sep = %s ================",msgprex,save,SepSave)
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get save data fail")}
 	ch <- res
 	return ""
@@ -291,7 +283,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     s1 := string(commitU1GammaG.C.Bytes())
     ss := enode + Sep + s0 + Sep + s1
     SendMsgToDcrmGroup(ss,GroupId)
-    fmt.Println("=============Sign_ec2,send msg to group,type is C11================")
 
     // 1. Receive Broadcast
     //	commitU1GammaG.C, commitU2GammaG.C, commitU3GammaG.C
@@ -301,8 +292,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	ch <- res
 	return ""
     }
-    fmt.Println("=============Sign_ec2,get all C11================")
-    
+ 
     // 2. MtA(k, gamma) and MtA(k, w)
     // 2.1 encrypt c_k = E_paillier(k)
     var ukc = make(map[string]*big.Int)
@@ -332,18 +322,18 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
 	en := strings.Split(string(enodes[8:]),"@")
-	
+
 	//paillier question 2,delete zkfactor,add ntilde h1 h2
 	u1zkFactProof := GetZkFactProof(save,k)
 	if u1zkFactProof == nil {
-	    fmt.Println("=================Sign_ec2,u1zkFactProof is nil.=====================")
+	    fmt.Println("=================Sign_ec2,u1zkFactProof is nil. Nonce =%s=====================",msgprex)
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get ntildeh1h2 fail")}
 	    ch <- res
 	    return ""
 	}
 
 	if len(en) == 0 || en[0] == "" {
-	    fmt.Println("=================Sign_ec2,get enode error,enodes = %s,uid = %v,cointype = %s,groupid = %s =====================",enodes,id,cointype,GroupId)
+	    fmt.Println("=================Sign_ec2,get enode error,Nonce =%s,enodes = %s,uid = %v,cointype = %s,groupid = %s =====================",msgprex,enodes,id,cointype,GroupId)
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get ntildeh1h2 fail")}
 	    ch <- res
 	    return ""
@@ -494,14 +484,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    //delete zkfactor,add ntilde h1 h2
 	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify_nhh(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
 	    if !u1rlt1 {
-		fmt.Println("=============1111111111111111==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
 	    }
 	} else {
 	    if len(en) <= 0 {
-		fmt.Println("=============2222222222222222==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -509,7 +497,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit := zk1proof[en[0]]
 	    if exsit == false {
-		fmt.Println("=============33333333333333333333==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -517,15 +504,13 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit = ukc[en[0]]
 	    if exsit == false {
-		fmt.Println("=============444444444444444444444==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
 	    }
-	    
+
 	    u1PaillierPk := GetPaillierPk(save,k)
 	    if u1PaillierPk == nil {
-		fmt.Println("=============555555555555==================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -533,7 +518,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    _,exsit = zkfactproof[cur_enode]
 	    if exsit == false {
-		fmt.Println("=================6666666666666666666==============")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -547,7 +531,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    u1rlt1 := zk1proof[en[0]].MtAZK1Verify_nhh(ukc[en[0]],u1PaillierPk,zkfactproof[cur_enode])
 	    if !u1rlt1 {
-		fmt.Println("=================7777777777==============")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -858,7 +841,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	en := strings.Split(string(enodes[8:]),"@")
 	//bug
 	if len(en) == 0 || en[0] == "" || mkg_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkg[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
-	    fmt.Println("==============1111111111111111=====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
@@ -867,14 +849,12 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	//delete zkfactor,add ntilde h1 h2
 	rlt111 := mkg_mtazk2[en[0]].MtAZK2Verify_nhh(ukc[cur_enode], mkg[en[0]],ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt111 {
-	    fmt.Println("==============222222222222222=====================")
 	    res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMKGFail)}
 	    ch <- res
 	    return ""
 	}
 
 	if len(en) == 0 || en[0] == "" || mkw_mtazk2[en[0]] == nil || cur_enode == "" || ukc[cur_enode] == nil || mkw[en[0]] == nil || ukc3[cur_enode] == nil || zkfactproof[en[0]] == nil {
-	    fmt.Println("==============3333333333333333=====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
@@ -883,7 +863,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	//Fusion_dcrm question 8
 	rlt112 := mkw_mtazk2[en[0]].MtAZK3Verify_nhh(ukc[cur_enode], mkw[en[0]], ukc3[cur_enode], zkfactproof[en[0]])
 	if !rlt112 {
-	    fmt.Println("==============4444444444444====================")
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("mkw mtazk2 verify fail.")}
 	    ch <- res
 	    return ""
@@ -1459,10 +1438,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	zkabproofmap[prexs2[len(prexs2)-1]] = zkABProof
     }
 
-    //BigVx,_ := new(big.Int).SetString("0",10)
-    //BigVy,_ := new(big.Int).SetString("0",10)
-    //BigVx,BigVy := secp256k1.S256().ScalarBaseMult(zero.Bytes())
-
     var BigVx,BigVy *big.Int
     for k,id := range idSign {
 	enodes := GetEnodesByUid(id,cointype,GroupId)
@@ -1472,20 +1447,20 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    ch <- res
 	    return ""
 	}
-	
+
 	_, BigVAB1 := commitbigcom[en[0]].DeCommit()
 	if lib.ZkABVerify([]*big.Int{BigVAB1[2], BigVAB1[3]}, []*big.Int{BigVAB1[4], BigVAB1[5]}, []*big.Int{BigVAB1[0], BigVAB1[1]}, []*big.Int{deltaGammaGx, deltaGammaGy}, zkabproofmap[en[0]]) == false {
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("verify zkabproof fail.")}
 	    ch <- res
 	    return ""
 	}
-    
+
 	if k == 0 {
 	    BigVx = BigVAB1[0]
 	    BigVy = BigVAB1[1]
 	    continue
 	}
-	
+
 	BigVx, BigVy = secp256k1.S256().Add(BigVx, BigVy, BigVAB1[0], BigVAB1[1])
     }
 
@@ -1504,9 +1479,6 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
     // *** Round 5C
     bigU1x, bigU1y := secp256k1.S256().ScalarMult(VAllx, VAlly, rho1.Bytes())
     // bigA23 = bigA2 + bigA3
-    //bigT1x,_ := new(big.Int).SetString("0",10)
-    //bigT1y,_ := new(big.Int).SetString("0",10)
-    //bigT1x,bigT1y := secp256k1.S256().ScalarBaseMult(zero.Bytes())
     var bigT1x,bigT1y *big.Int
     var ind int
     for k,id := range idSign {
@@ -1925,11 +1897,6 @@ func EncryptMsg (msg string,enodeID string) (string, error) {
 
     fmt.Println("=============EncryptMsg,KeyFile = %s,enodeID = %s ================",KeyFile,enodeID)
 
-    ////////test only
-    //nodeKey, errkey := crypto.LoadECDSA(KeyFile)
-    //if errkey != nil {
-	//return "",errkey
-    //}
     /////////////////
 
     hprv, err1 := hex.DecodeString(enodeID)
@@ -1937,7 +1904,6 @@ func EncryptMsg (msg string,enodeID string) (string, error) {
 	return "",err1
     }
 
-    fmt.Println("=============EncryptMsg,hprv len = %v ================",len(hprv))
     p := &ecdsa.PublicKey{Curve: crypto.S256(), X: new(big.Int), Y: new(big.Int)}
     half := len(hprv) / 2
     p.X.SetBytes(hprv[:half])
@@ -1974,7 +1940,6 @@ func DecryptMsg (cm string) (string, error) {
 }
 
 func SendMsgToPeer(enodes string,msg string) {
-    fmt.Println("============SendMsgToPeer,enodes = %s,msg = %s ==============",enodes,msg)
     en := strings.Split(string(enodes[8:]),"@")
     cm,err := EncryptMsg(msg,en[0])
     if err != nil {
@@ -2261,3 +2226,4 @@ func GetIds(cointype string,groupid string) sortableIDSSlice {
     sort.Sort(ids)
     return ids
 }
+

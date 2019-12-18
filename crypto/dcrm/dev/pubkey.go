@@ -32,7 +32,7 @@ import (
 //msgprex = hash 
 func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
 
-    fmt.Println("========dcrm_liloreqAddress============")
+    fmt.Println("========dcrm_liloreqAddress,Nonce =%s============",msgprex)
     GetEnodesInfo()
 
     if int32(Enode_cnts) != int32(NodeCnt) {
@@ -80,8 +80,6 @@ func dcrm_liloreqAddress(msgprex string,keytype string,ch chan interface{}) {
     }
     save := iter.Value.(string)
 
-    fmt.Println("=============================dcrm_liloreqAddress,write data to db start,worker id = %v =======================================",id)
-    
     s := []string{string(ys),save} ////fusionaddr ??
     ss := strings.Join(s,Sep)
     kd := KeyData{Key:ys,Data:ss}
@@ -311,7 +309,7 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
 	mm := strings.Split(v, Sep)
 	//bug
 	if len(mm) < 4 {
-	    fmt.Println("===================!!! KeyGenerate_ec2,fill lib.ShareStruct map error. !!!==================")
+	    fmt.Println("===================!!! KeyGenerate_ec2,fill lib.ShareStruct map error. !!!,Nonce =%s ==================",msgprex)
 	    res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("fill lib.ShareStruct map error.")}
 	    ch <- res
 	    return false
@@ -604,7 +602,6 @@ func KeyGenerate_ec2(msgprex string,ch chan interface{},id int,cointype string) 
     s3 = string(u1NtildeH1H2.H2.Bytes())
     ss = enode + Sep + s0 + Sep + s1 + Sep + s2 + Sep + s3
     SendMsgToDcrmGroup(ss,GroupId)
-    fmt.Println("=====================KeyGenerate_ec2,ntildeh1h2 data size = %v =====================",len(ss))
 
     // 1. Receive Broadcast zk
     // u1zkFactProof, u2zkFactProof, u3zkFactProof, u4zkFactProof, u5zkFactProof

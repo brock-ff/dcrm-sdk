@@ -807,11 +807,10 @@ type RecvMsg struct {
     groupid string
 }
 
-func Dcrmcall(msg interface{},enode string) <-chan string {
+func DcrmCall(msg interface{},enode string) <-chan string {
     ch := make(chan string, 1)
     GroupId := GetGroupIdByEnode(enode)
-    fmt.Println("=========Dcrmcall===========","GroupId",GroupId,"enode",enode)
-    //if !strings.EqualFold(GroupId,enode) {
+    fmt.Println("=========DcrmCall===========","GroupId",GroupId,"enode",enode)
     if strings.EqualFold(GroupId,"") {
 	ret := ("fail"+Sep+"xxx"+Sep+"error group id")
 	ch <- ret 
@@ -837,17 +836,17 @@ func Dcrmcall(msg interface{},enode string) <-chan string {
     return ch
 }
 
-func Dcrmcallret(msg interface{},enode string) {
+func DcrmCallRet(msg interface{},enode string) {
     res := msg.(string)
     if res == "" {
 	return
     }
    
-    fmt.Println("=========Dcrmcallret,node count=%v,recev from node = %s,cur_enode = %s,msg =%s ==============",NodeCnt,enode,cur_enode,res)
+    fmt.Println("=========DcrmCallRet,node count=%v,recev from node = %s,cur_enode = %s ==============",NodeCnt,enode,cur_enode)
 
     ss := strings.Split(res,Sep)
     if len(ss) != 4 {
-	fmt.Println("=========Dcrmcallret,ss len != 4 .==============")
+	fmt.Println("=========DcrmCallRet,ss len != 4 .==============")
 	return
     }
 
@@ -856,7 +855,7 @@ func Dcrmcallret(msg interface{},enode string) {
     ret := ss[3]
     workid,err := strconv.Atoi(ss[1])
     if err != nil || workid < 0 {
-	fmt.Println("=========Dcrmcallret,workid < 0.==============")
+	fmt.Println("=============DcrmCallRet,workid < 0.==============")
 	return
     }
 
@@ -869,7 +868,6 @@ func Dcrmcallret(msg interface{},enode string) {
 	if ss[2] == "rpc_sign" {
 	    if w.retres.Len() == NodeCnt {
 		ret := GetGroupRes(workid)
-		fmt.Println("=========Dcrmcallret,status success,Get All Node Result.==============")
 		w.ch <- ret
 	    }
 	}
@@ -895,7 +893,6 @@ func Dcrmcallret(msg interface{},enode string) {
 	if ss[2] == "rpc_sign" {
 	    if w.retres.Len() == NodeCnt {
 		ret := GetGroupRes(workid)
-		fmt.Println("=========Dcrmcallret,status fail,Get All Node Result.==============")
 		w.ch <- ret
 	    }
 	}
@@ -906,7 +903,7 @@ func Dcrmcallret(msg interface{},enode string) {
 		w.ch <- ret
 	    }
 	}
-	
+
 	return
     }
 }
@@ -944,10 +941,10 @@ func GetGroupRes(wid int) RpcDcrmRes {
 	//res2 := RpcDcrmRes{Ret:"",Err:err}
 	//return res2
 	return (*ll)
-	
+
 	iter = iter.Next()
     }
-    
+ 
     res2 := RpcDcrmRes{Ret:"",Err:nil}
     return res2
 }
@@ -1037,16 +1034,16 @@ func (self *RecvMsg) Run(workid int,ch chan interface{}) bool {
 	    }
 
 	    if cherr != nil {
-		fmt.Println("===============Recv.Run,lockout err = %s ==================",cherr.Error())
 		res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:cherr}
 		ch <- res2
 		return false
 	    }
-	    
+
 	    res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:fmt.Errorf("send tx to net fail.")}
 	    ch <- res2
 	    return true
 	}
+
 	//rpc_req_dcrmaddr
 	if rr.MsgType == "rpc_req_dcrmaddr" {
 	    //msg = keytype 
@@ -1058,13 +1055,11 @@ func (self *RecvMsg) Run(workid int,ch chan interface{}) bool {
 	    dcrm_liloreqAddress(w.sid,rr.Msg,rch)
 	    chret,cherr := GetChannelValue(ch_t,rch)
 	    if cherr != nil {
-		var ret2 Err
-		ret2.Info = cherr.Error()
-		res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:ret2}
+		res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType,Err:cherr}
 		ch <- res2
 		return false
 	    }
-	    
+
 	    res2 := RpcDcrmRes{Ret:strconv.Itoa(rr.WorkId)+Sep+rr.MsgType+Sep+chret,Err:nil}
 	    ch <- res2
 	    return true
@@ -1194,7 +1189,7 @@ func (self *ReqAddrSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
     }
 
     GroupId := GetGroupIdByEnode(cur_enode)
-    fmt.Println("=========ReqAddrSendMsgToMsg.Run===========","GroupId",GroupId,"cur_enode",cur_enode)
+    fmt.Println("=========ReqAddrSendMsgToMsg.Run,Nonce = %s,GroupId = %s,===========",nonce,GroupId)
     if strings.EqualFold(GroupId,"") {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get group id fail.")}
 	ch <- res
@@ -1204,15 +1199,16 @@ func (self *ReqAddrSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
     _,err = SendToGroupAllNodes(GroupId,res)
     
     if err != nil {
-	fmt.Println("===============ReqAddrSendMsgToMsg.Run,send to group all nodes fail,error = %s ===================",err.Error())
+	fmt.Println("===============ReqAddrSendMsgToMsg.Run,send to group all nodes fail,Nonce = %s,error = %s ===================",nonce,err.Error())
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrSendDataToGroupFail)}
 	ch <- res
 	return false
     }
 
-    fmt.Println("=========ReqAddrSendMsgToMsg.Run,waiting for result===========","GroupId",GroupId,"cur_enode",cur_enode)
+    fmt.Println("=========ReqAddrSendMsgToMsg.Run,waiting for result,Nonce =%s,GroupId = %s===========",nonce,GroupId)
     w := workers[workid]
     chret,cherr := GetChannelValue(sendtogroup_timeout,w.ch)
+    fmt.Println("=========ReqAddrSendMsgToMsg.Run,get result,Nonce =%s,GroupId = %s,result = %v,err =%v ===========",nonce,GroupId,chret,cherr)
     if cherr != nil {
 	res2 := RpcDcrmRes{Ret:chret,Err:cherr}
 	ch <- res2
@@ -1275,7 +1271,7 @@ func (self *SignSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
     }
 
     GroupId := GetGroupIdByEnode(cur_enode)
-    fmt.Println("=========SignSendMsgToDcrm.Run===========","GroupId",GroupId,"cur_enode",cur_enode)
+    fmt.Println("============ SignSendMsgToDcrm.Run,Nonce =%s,GroupId =%s ==============",nonce,GroupId)
     if strings.EqualFold(GroupId,"") {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("get group id fail.")}
 	ch <- res
@@ -1284,22 +1280,21 @@ func (self *SignSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
     
     _,err = SendToGroupAllNodes(GroupId,res)
     if err != nil {
-	fmt.Println("===============SignSendMsgToMsg.Run,send to group all nodes fail,error = %s ===================",err.Error())
+	fmt.Println("===============SignSendMsgToMsg.Run,send to group all nodes fail,Nonce =%s,GroupId =%s,error = %s ===================",nonce,GroupId,err.Error())
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrSendDataToGroupFail)}
 	ch <- res
 	return false
     }
 
-    fmt.Printf("=========SignSendMsgToDcrm.Run,waiting for result.===========GroupId = %s,cur_enode =%s========\n",GroupId,cur_enode)
+    fmt.Println("============ SignSendMsgToDcrm.Run,waiting for result. ===========Nonce =%s,GroupId = %s",nonce,GroupId)
     w := workers[workid]
     chret,cherr := GetChannelValue(sendtogroup_lilo_timeout,w.ch)
+    fmt.Println("=============== SignSendMsgToDcrm.Run,Nonce =%s,GroupId =%s,result =%v,err =%v ================",nonce,GroupId,chret,cherr)
     if cherr != nil {
-	fmt.Printf("=========SignSendMsgToDcrm.Run,get result.===========err = %s,GroupId = %s,cur_enode =%s========\n",cherr.Error(),GroupId,cur_enode)
 	res2 := RpcDcrmRes{Ret:chret,Err:cherr}
 	ch <- res2
 	return false
     }
-    fmt.Printf("=========SignSendMsgToDcrm.Run,get result.===========result = %s,GroupId = %s,cur_enode = %s========\n",chret,GroupId,cur_enode)
     res2 := RpcDcrmRes{Ret:chret,Err:cherr}
     ch <- res2
 
@@ -1425,11 +1420,9 @@ func SendReqToGroup(msg string,rpctype string) (string,error) {
     RpcReqQueueCache <- req
     chret,cherr := GetChannelValue(t,req.ch)
     if cherr != nil {
-	fmt.Println("=========SendReqToGroup,get result,err = %s ============",cherr.Error())
 	return chret,cherr
     }
 
-    fmt.Println("=========SendReqToGroup,get result = %s ============",chret)
     return chret,nil
 }
 
@@ -1569,7 +1562,7 @@ func DisMsg(msg string) {
 
 	    w.msg_c1.PushBack(msg)
 	    if w.msg_c1.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All C1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All C1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bc1 <- true
 	    }
 	case "D1":
@@ -1584,7 +1577,7 @@ func DisMsg(msg string) {
 
 	    w.msg_d1_1.PushBack(msg)
 	    if w.msg_d1_1.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All D1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All D1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bd1_1 <- true
 	    }
 	case "SHARE1":
@@ -1599,7 +1592,7 @@ func DisMsg(msg string) {
 
 	    w.msg_share1.PushBack(msg)
 	    if w.msg_share1.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All SHARE1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All SHARE1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bshare1 <- true
 	    }
 	case "NTILDEH1H2":
@@ -1614,7 +1607,7 @@ func DisMsg(msg string) {
 
 	    w.msg_zkfact.PushBack(msg)
 	    if w.msg_zkfact.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All NTILDEH1H2===========","GroupId",w.groupid)
+		fmt.Println("=========Get All NTILDEH1H2,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bzkfact <- true
 	    }
 	case "ZKUPROOF":
@@ -1629,7 +1622,7 @@ func DisMsg(msg string) {
 
 	    w.msg_zku.PushBack(msg)
 	    if w.msg_zku.Len() == (NodeCnt-1) {
-		fmt.Println("=========Get All ZKUPROOF===========","GroupId",w.groupid)
+		fmt.Println("=========Get All ZKUPROOF,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bzku <- true
 	    }
 	case "MTAZK1PROOF":
@@ -1644,7 +1637,7 @@ func DisMsg(msg string) {
 
 	    w.msg_mtazk1proof.PushBack(msg)
 	    if w.msg_mtazk1proof.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All MTAZK1PROOF===========","GroupId",w.groupid)
+		fmt.Println("=========Get All MTAZK1PROOF,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bmtazk1proof <- true
 	    }
 	    //sign
@@ -1660,7 +1653,7 @@ func DisMsg(msg string) {
 
 	    w.msg_c11.PushBack(msg)
 	    if w.msg_c11.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All C11===========","GroupId",w.groupid)
+		fmt.Println("=========Get All C11,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bc11 <- true
 	    }
        case "KC":
@@ -1675,7 +1668,7 @@ func DisMsg(msg string) {
 
 	    w.msg_kc.PushBack(msg)
 	    if w.msg_kc.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All KC===========","GroupId",w.groupid)
+		fmt.Println("=========Get All KC,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bkc <- true
 	    }
        case "MKG":
@@ -1690,7 +1683,7 @@ func DisMsg(msg string) {
 
 	    w.msg_mkg.PushBack(msg)
 	    if w.msg_mkg.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All MKG===========","GroupId",w.groupid)
+		fmt.Println("=========Get All MKG,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bmkg <- true
 	    }
        case "MKW":
@@ -1705,7 +1698,7 @@ func DisMsg(msg string) {
 
 	    w.msg_mkw.PushBack(msg)
 	    if w.msg_mkw.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All MKW===========","GroupId",w.groupid)
+		fmt.Println("=========Get All MKW,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bmkw <- true
 	    }
        case "DELTA1":
@@ -1720,7 +1713,7 @@ func DisMsg(msg string) {
 
 	    w.msg_delta1.PushBack(msg)
 	    if w.msg_delta1.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All DELTA1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All DELTA1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bdelta1 <- true
 	    }
 	case "D11":
@@ -1735,7 +1728,7 @@ func DisMsg(msg string) {
 
 	    w.msg_d11_1.PushBack(msg)
 	    if w.msg_d11_1.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All D11===========","GroupId",w.groupid)
+		fmt.Println("=========Get All D11,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bd11_1 <- true
 	    }
 	case "CommitBigVAB":
@@ -1750,7 +1743,7 @@ func DisMsg(msg string) {
 
 	    w.msg_commitbigvab.PushBack(msg)
 	    if w.msg_commitbigvab.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All CommitBigVAB===========","GroupId",w.groupid)
+		fmt.Println("=========Get All CommitBigVAB,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bcommitbigvab <- true
 	    }
 	case "ZKABPROOF":
@@ -1765,7 +1758,7 @@ func DisMsg(msg string) {
 
 	    w.msg_zkabproof.PushBack(msg)
 	    if w.msg_zkabproof.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All ZKABPROOF===========","GroupId",w.groupid)
+		fmt.Println("=========Get All ZKABPROOF,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bzkabproof <- true
 	    }
 	case "CommitBigUT":
@@ -1780,7 +1773,7 @@ func DisMsg(msg string) {
 
 	    w.msg_commitbigut.PushBack(msg)
 	    if w.msg_commitbigut.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All CommitBigUT===========","GroupId",w.groupid)
+		fmt.Println("=========Get All CommitBigUT,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bcommitbigut <- true
 	    }
 	case "CommitBigUTD11":
@@ -1795,7 +1788,7 @@ func DisMsg(msg string) {
 
 	    w.msg_commitbigutd11.PushBack(msg)
 	    if w.msg_commitbigutd11.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All CommitBigUTD11===========","GroupId",w.groupid)
+		fmt.Println("=========Get All CommitBigUTD11,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bcommitbigutd11 <- true
 	    }
 	case "S1":
@@ -1810,7 +1803,7 @@ func DisMsg(msg string) {
 
 	    w.msg_s1.PushBack(msg)
 	    if w.msg_s1.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All S1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All S1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bs1 <- true
 	    }
 	case "SS1":
@@ -1825,7 +1818,7 @@ func DisMsg(msg string) {
 
 	    w.msg_ss1.PushBack(msg)
 	    if w.msg_ss1.Len() == (ThresHold-1) {
-		fmt.Println("=========Get All SS1===========","GroupId",w.groupid)
+		fmt.Println("=========Get All SS1,Nonce =%s,GroupId =%s===========",prexs[0],w.groupid)
 		w.bss1 <- true
 	    }
 
