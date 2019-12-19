@@ -18,10 +18,14 @@ package layer2
 
 import (
 	"context"
+	"errors"
+	//"math"
 	"net"
+	"sort"
 	"time"
 	"fmt"
 
+	"github.com/fsn-dev/dcrm-sdk/crypto"
 	"github.com/fsn-dev/dcrm-sdk/p2p"
 	"github.com/fsn-dev/dcrm-sdk/p2p/discover"
 	"github.com/fsn-dev/dcrm-sdk/rpc"
@@ -29,7 +33,7 @@ import (
 
 // txs start
 func DcrmProtocol_sendToGroupOneNode(msg string) (string, error) {
-	return discover.SendToGroup(discover.NodeID{}, msg, false, DcrmProtocol_type)
+	return discover.SendToGroup(discover.NodeID{}, msg, false, DcrmProtocol_type, nil)
 }
 
 // broadcast
@@ -188,7 +192,7 @@ func SendMsg(msg string) {
 }
 
 func SendToDcrmGroupAllNodes(msg string) (string, error) {
-	return discover.SendToGroup(discover.NodeID{}, msg, true, DcrmProtocol_type)
+	return discover.SendToGroup(discover.NodeID{}, msg, true, DcrmProtocol_type, nil)
 }
 
 func RegisterRecvCallback(recvPrivkeyFunc func(interface{})) {
@@ -224,27 +228,75 @@ func ParseNodeID(enode string) string {
 //================   API   SDK    =====================
 func SdkProtocol_sendToGroupOneNode(gID, msg string) (string, error) {
 	gid, _ := discover.HexID(gID)
-	return discover.SendToGroup(gid, msg, false, Sdkprotocol_type)
+	if checkExistGroup(gid) == false {
+		fmt.Printf("sendToGroupOneNode, group gid: %v not exist\n", gid)
+		return "", errors.New("sendToGroupOneNode, gid not exist")
+	}
+	g := getSDKGroupNodes(gid)
+	return discover.SendToGroup(gid, msg, false, Sdkprotocol_type, g)
+}
+
+func getSDKGroupNodes(gid discover.NodeID) []*discover.Node {
+	g := make([]*discover.Node, 0)
+	_, xvcGroup := getGroupSDK(gid)
+	if xvcGroup == nil {
+		return g
+	}
+	for _, rn := range xvcGroup.Nodes {
+		n := discover.NewNode(rn.ID, rn.IP, rn.UDP, rn.TCP)
+		g = append(g, n)
+	}
+	return g
 }
 
 func SdkProtocol_SendToGroupAllNodes(gID, msg string) (string, error) {
 	gid, _ := discover.HexID(gID)
-	return discover.SendToGroup(gid, msg, true, Sdkprotocol_type)
+	if checkExistGroup(gid) == false {
+		e := fmt.Sprintf("SendGroupAllNodes, group gid: %v not exist", gid)
+		fmt.Println(e)
+		return "", errors.New(e)
+	}
+	g := getSDKGroupNodes(gid)
+	return discover.SendToGroup(gid, msg, true, Sdkprotocol_type, g)
 }
 
 func SdkProtocol_broadcastInGroupOthers(gID, msg string) (string, error) { // without self
 	gid, _ := discover.HexID(gID)
+	if checkExistGroup(gid) == false {
+		e := fmt.Sprintf("broadcastInGroupOthers, group gid: %v not exist", gid)
+		fmt.Println(e)
+		return "", errors.New(e)
+	}
 	return BroadcastToGroup(gid, msg, Sdkprotocol_type, false)
 }
 
 func SdkProtocol_broadcastInGroupAll(gID, msg string) (string, error) { // within self
 	gid, _ := discover.HexID(gID)
+	if checkExistGroup(gid) == false {
+		e := fmt.Sprintf("broadcastInGroupAll, group gid: %v not exist", gid)
+		fmt.Println(e)
+		return "", errors.New(e)
+	}
 	return BroadcastToGroup(gid, msg, Sdkprotocol_type, true)
 }
 
 func SdkProtocol_getGroup(gID string) (int, string) {
+	fmt.Printf("getGroup, gid: %v\n", gID)
 	gid, _ := discover.HexID(gID)
+	if checkExistGroup(gid) == false {
+		fmt.Printf("broadcastInGroupAll, group gid: %v not exist\n", gid)
+		return 0, ""
+	}
 	return getGroup(gid, Sdkprotocol_type)
+}
+
+func checkExistGroup(gid discover.NodeID) bool {
+	if SdkGroup[gid] != nil {
+		if SdkGroup[gid].Type == "1+2" || SdkGroup[gid].Type == "1+1+1" {
+			return true
+		}
+	}
+	return false
 }
 
 //  ---------------------   API  callback   ----------------------
@@ -259,5 +311,98 @@ func SdkProtocol_registerSendToGroupCallback(sdkcallback func(interface{}, strin
 // recv return from sendToGroup...
 func SdkProtocol_registerSendToGroupReturnCallback(sdkcallback func(interface{}, string)) {
 	discover.RegisterSdkMsgRetCallback(sdkcallback)
+}
+
+// 1 + 1 + 1
+func CreateSDKGroup(mode string, enodes []string) (string, int, string) {
+	count := len(enodes)
+	sort.Sort(sort.StringSlice(enodes))
+	enode := []*discover.Node{}
+	selfid := fmt.Sprintf("%v", discover.GetLocalID())
+	id := []byte("")
+	for _, un := range enodes {
+		fmt.Printf("for un: %v\n", un)
+		node, err := discover.ParseNode(un)
+		if err != nil {
+			fmt.Printf("CreateSDKGroup, parse err: %v\n", un)
+			return "", 0, "enode wrong format"
+		}
+		fmt.Printf("for selfid: %v, node.ID: %v\n", selfid, node.ID)
+		if selfid != node.ID.String() {
+			p := emitter.peers[node.ID]
+			if p == nil {
+				fmt.Printf("CreateSDKGroup, peers err: %v\n", un)
+				return "", 0, "enode is not peer"
+			}
+		}
+		n := fmt.Sprintf("%v", node.ID)
+		fmt.Printf("CreateSDKGroup, n: %v\n", n)
+		if len(id) == 0 {
+			id = crypto.Keccak512([]byte(node.ID.String()))
+		} else {
+			id = crypto.Keccak512(id, []byte(node.ID.String()))
+		}
+		enode = append(enode, node)
+	}
+	gid, err := discover.BytesID(id)
+	fmt.Printf("CreateSDKGroup, gid <- id: %v, err: %v\n", gid, err)
+	for i, g := range SdkGroup {
+		if i == gid {
+			return gid.String(), len(g.Nodes), "group is exist"
+		}
+	}
+	retErr := discover.StartCreateSDKGroup(gid, mode, enode, "1+1+1")
+	return gid.String(), count, retErr
+}
+
+func GetEnodeStatus(enode string) (string, string) {
+	return discover.GetEnodeStatus(enode)
+}
+
+func CheckAddPeer(enodes []string) error {
+	addpeer := false
+	selfid := fmt.Sprintf("%v", discover.GetLocalID())
+	var nodes []*discover.Node
+	for _, enode := range enodes {
+		node, err := discover.ParseNode(enode)
+		if err != nil {
+			msg := fmt.Sprintf("CheckAddPeer, parse err enode: %v", enode)
+			return errors.New(msg)
+		}
+		if selfid == node.ID.String() {
+			continue
+		}
+
+		status, _ := GetEnodeStatus(enode)
+		if status == "OffLine" {
+			msg := fmt.Sprintf("CheckAddPeer, enode: %v offline", enode)
+			return errors.New(msg)
+		}
+		p := emitter.peers[node.ID]
+		if p == nil {
+			addpeer = true
+			nodes = append(nodes, node)
+			go p2pServer.AddPeer(node)
+		}
+	}
+	if addpeer {
+		fmt.Printf("CheckAddPeer, waitting add peer ...\n")
+		count := 0
+		for _, node := range nodes {
+			p := emitter.peers[node.ID]
+			if p == nil {
+				time.Sleep(time.Duration(1) * time.Second)
+				count += 1
+				if count > (len(nodes) * 10) {
+					fmt.Printf("CheckAddPeer, add peer failed node: %v\n", node)
+					msg := fmt.Sprintf("CheckAddPeer, add peer failed node: %v", node)
+					return errors.New(msg)
+				}
+				continue
+			}
+			fmt.Printf("CheckAddPeer, add peer success node: %v\n", node)
+		}
+	}
+	return nil
 }
 

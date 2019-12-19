@@ -100,6 +100,13 @@ type (
 		Rest []rlp.RawValue `rlp:"tail"`
 	}
 
+	RpcNode struct {
+		IP  net.IP // len 4 for IPv4 or 16 for IPv6
+		UDP uint16 // for discovery protocol
+		TCP uint16 // for RLPx protocol
+		ID  NodeID
+	}
+
 	rpcNode struct {
 		IP  net.IP // len 4 for IPv4 or 16 for IPv6
 		UDP uint16 // for discovery protocol
@@ -258,6 +265,7 @@ func newUDP(c conn, cfg Config) (*Table, *udp, error) {
 	}
 	udp.Table = tab
 	Table4group = tab
+	SelfID = fmt.Sprintf("%v", GetLocalID())
 
 	go udp.loop()
 	go udp.readLoop(cfg.Unhandled)
@@ -588,13 +596,13 @@ func decodePacket(buf []byte) (packet, NodeID, []byte, error) {
 	case Xp_findGroupPacket:
 		req = new(findgroup)
 	case Dcrm_groupPacket:
-		req = new(group)
+		req = new(Group)
 	case Sdk_groupPacket:
-		req = new(group)
+		req = new(Group)
 	case Xp_groupPacket:
-		req = new(group)
+		req = new(Group)
 	case Dcrm_groupInfoPacket:
-		req = new(groupmessage)
+		req = new(Group)
 	case PeerMsgPacket:
 		req = new(message)
 	case getDcrmPacket:
@@ -618,6 +626,7 @@ func decodePacket(buf []byte) (packet, NodeID, []byte, error) {
 }
 
 func (req *ping) handle(t *udp, from *net.UDPAddr, fromID NodeID, mac []byte) error {
+	go updateRemoteIP(req.To.IP, req.To.UDP)
 	if expired(req.Expiration) {
 		return errExpired
 	}
