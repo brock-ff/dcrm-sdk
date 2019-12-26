@@ -79,9 +79,9 @@ func init() {
 	app.Version = "5.0"
 	app.Action = StartDcrm 
 	app.Flags = []cli.Flag{
-		cli.IntFlag{Name: "rpcport", Value: 5559, Usage: "listen port", Destination: &rpcport},
-		cli.IntFlag{Name: "port", Value: 5551, Usage: "listen port", Destination: &port},
-		cli.StringFlag{Name: "bootnodes", Value: "enode://200cb94957955bfa331ce14b72325c39f3eaa6bcfa962308c967390e5722f6fda0f6080781fde6a025a6280fbf23f38ca454e51a6b75ddbc1f9d57593790545a@47.107.50.83:5550", Usage: "boot node", Destination: &bootnodes},
+		cli.IntFlag{Name: "rpcport", Value: 0, Usage: "listen port", Destination: &rpcport},
+		cli.IntFlag{Name: "port", Value: 0, Usage: "listen port", Destination: &port},
+		cli.StringFlag{Name: "bootnodes", Value: "", Usage: "boot node", Destination: &bootnodes},
 		cli.StringFlag{Name: "nodekey", Value: "", Usage: "private key filename", Destination: &keyfile},
 		cli.StringFlag{Name: "genkey", Value: "", Usage: "generate a node key", Destination: &genKey},
 	}
@@ -98,25 +98,34 @@ func getConfig() error {
 	bnodes := cf.Gdcrm.Bootnodes
 	pt := cf.Gdcrm.Port
 	rport := cf.Gdcrm.Rpcport
-	if nkey != "" {
+	if nkey != "" && keyfile == "" {
 		keyfile = nkey
 	}
-	if bnodes != "" {
+	if bnodes != "" && bootnodes == "" {
 		bootnodes = bnodes
 	}
-	if pt != 0 {
+	if pt != 0 && port == 0 {
 		port = pt
 	}
-	if rport != 0 {
+	if rport != 0 && rpcport == 0 {
 		rpcport = rport
 	}
-	fmt.Printf("keyfile: %v, bootnodes: %v, port: %v, rpcport: %v\n", keyfile, bootnodes, port, rpcport)
 	return nil
 }
 
 func startP2pNode(c *cli.Context) error {
 	go func() error {
 		getConfig()
+		if port == 0 {
+			port = 5551
+		}
+		if rpcport == 0 {
+			rpcport = 5559
+		}
+		if bootnodes == "" {
+			bootnodes = "enode://200cb94957955bfa331ce14b72325c39f3eaa6bcfa962308c967390e5722f6fda0f6080781fde6a025a6280fbf23f38ca454e51a6b75ddbc1f9d57593790545a@47.107.50.83:5550"
+		}
+		fmt.Printf("keyfile: %v, bootnodes: %v, port: %v, rpcport: %v\n", keyfile, bootnodes, port, rpcport)
 		if genKey != "" {
 			nodeKey, err := crypto.GenerateKey()
 			if err != nil {

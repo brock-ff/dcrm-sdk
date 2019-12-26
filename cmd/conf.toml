@@ -3,7 +3,7 @@
 # nodekey
 Nodekey="bootnode.key"
 # port
-Addr=4444
+Addr=40401
 # group mode
 Group=0
 # nodes number in group
@@ -14,9 +14,9 @@ Nodes=3
 # nodekey
 Nodekey="node.key"
 # bootnodes
-Bootnodes=""
+Bootnodes="enode://200cb94957955bfa331ce14b72325c39f3eaa6bcfa962308c967390e5722f6fda0f6080781fde6a025a6280fbf23f38ca454e51a6b75ddbc1f9d57593790545a@47.107.50.83:5550"
 # port
-Port=5555
+Port=5551
 # rpcport
-Rpcport=6666
+Rpcport=5559
 
