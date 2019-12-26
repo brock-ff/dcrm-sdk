@@ -24,6 +24,7 @@ import (
 	"net"
 	"os"
 
+	"github.com/BurntSushi/toml"
 	//"github.com/fusion/go-fusion/cmd/utils"
 	"github.com/fsn-dev/dcrm-sdk/crypto"
 	"github.com/fsn-dev/dcrm-sdk/p2p/discover"
@@ -34,7 +35,7 @@ import (
 
 func main() {
 	var (
-		groupNum    = flag.Int("group", int(0), "group Number: default 0")
+		groupNum    = flag.Uint("group", uint(0), "group Number: default 0")
 		groupNodesNum = flag.Uint("nodes", uint(3), "nodes Number in some group, must >= 2")
 		listenAddr  = flag.String("addr", ":40401", "listen address")
 		genKey      = flag.String("genkey", "", "generate a node key")
@@ -49,6 +50,7 @@ func main() {
 		err     error
 	)
 	flag.Parse()
+	getConfig(groupNum, groupNodesNum, listenAddr, nodeKeyFile)
 
 	natm, err := nat.Parse(*natdesc)
 	if err != nil {
@@ -140,3 +142,42 @@ func main() {
 
 	select {}
 }
+
+type conf struct {
+	Bootnode *bootnodeConf
+}
+
+type bootnodeConf struct {
+	Nodekey string
+	Addr uint
+	Group uint
+	Nodes uint
+}
+
+func getConfig(groupNum, groupNodesNum *uint, listenAddr, nodeKeyFile *string) error {
+	var cf conf
+	var path string = "./conf.toml"
+	if _, err := toml.DecodeFile(path, &cf); err != nil {
+		//fmt.Printf("%v\n", err)
+		return err
+	}
+	nkey := cf.Bootnode.Nodekey
+	pt := cf.Bootnode.Addr
+	gp := cf.Bootnode.Group
+	ns := cf.Bootnode.Nodes
+	if nkey != "" {
+		*nodeKeyFile = nkey
+	}
+	if pt != 0 {
+		*listenAddr = fmt.Sprintf(":%v", pt)
+	}
+	if gp != 0 {
+		*groupNum = gp
+	}
+	if ns != 0 {
+		*groupNodesNum = ns
+	}
+	fmt.Printf("nodeKeyFile: %v, listenAddr: %v, group: %v, nodes: %v\n", *nodeKeyFile, *listenAddr, *groupNum, *groupNodesNum)
+	return nil
+}
+

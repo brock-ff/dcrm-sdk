@@ -47,6 +47,9 @@ Next compile the code.  Make sure you are in /dcrm-sdk directory.
 ```
 cd dcrm-sdk && make
 ```
+## config file
+cmd/conf.toml (bin/cmd/conf.toml)
+```
 ## Run
 Open access to the APIs by running the compiled code. 
 ```
