@@ -1162,6 +1162,7 @@ type ReqAddrSendMsgToDcrm struct {
 }
 
 func (self *ReqAddrSendMsgToDcrm) Run(workid int,ch chan interface{}) bool {
+    fmt.Println("===================ReqAddrSendMsgToDcrm.Run=================")
     if workid < 0 {
 	res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrGetWorkerIdError)}
 	ch <- res

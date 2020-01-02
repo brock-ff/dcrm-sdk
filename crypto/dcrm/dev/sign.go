@@ -484,6 +484,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 	    //delete zkfactor,add ntilde h1 h2
 	    u1rlt1 := zk1proof[cur_enode].MtAZK1Verify_nhh(ukc[cur_enode],ukc3[cur_enode],zkfactproof[cur_enode])
 	    if !u1rlt1 {
+		fmt.Println("============sign,111111111,verify mtazk1proof fail===================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -511,6 +512,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    u1PaillierPk := GetPaillierPk(save,k)
 	    if u1PaillierPk == nil {
+		fmt.Println("============sign,22222222,verify mtazk1proof fail===================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
@@ -531,6 +533,7 @@ func Sign_ec2(msgprex string,save string,message string,cointype string,pkx *big
 
 	    u1rlt1 := zk1proof[en[0]].MtAZK1Verify_nhh(ukc[en[0]],u1PaillierPk,zkfactproof[cur_enode])
 	    if !u1rlt1 {
+		fmt.Println("============sign,333333333,verify mtazk1proof fail===================")
 		res := RpcDcrmRes{Ret:"",Err:GetRetErr(ErrVerifyMTAZK1PROOFFail)}
 		ch <- res
 		return ""
