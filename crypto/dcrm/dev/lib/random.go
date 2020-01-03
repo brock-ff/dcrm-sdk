@@ -20,52 +20,34 @@ import (
 	"github.com/fsn-dev/dcrm-sdk/internal/common/math/random"
 	"math/big"
 	"time"
-	"fmt"
 )
 
 var (
-    //SafePrime = make(chan *big.Int, 1000)
-    SafePrime = make([]*big.Int, 0)
+    SafePrime = make(chan *big.Int, 1000)
     RndInt = make(chan *big.Int, 1000)
 )
 
 func GenRandomSafePrime(length int) {
-    p1 := random.GetSafeRandomPrimeInt(length/2)
-    //SafePrime[0] = p1
-    SafePrime = append(SafePrime,p1)
-    p2 := random.GetSafeRandomPrimeInt(length/2)
-    //SafePrime[1] = p2
-    SafePrime = append(SafePrime,p2)
-    p3 := random.GetSafeRandomPrimeInt(length/2)
-    //SafePrime[2] = p3
-    SafePrime = append(SafePrime,p3)
-    p4 := random.GetSafeRandomPrimeInt(length/2)
-    //SafePrime[3] = p4
-    SafePrime = append(SafePrime,p4)
-    fmt.Println("==============GenRandomSafePrime,p1 =%v,p2 =%v,p3 =%v,p4 =%v ================",p1,p2,p3,p4)
-    return
-    
-    /*for {
+    for {
 	if len(SafePrime) < 1000 {
 	    rndInt := <-RndInt
 	    p := random.GetSafeRandomPrimeInt2(length/2,rndInt)
 	    if p != nil {
 		SafePrime <-p
-		time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
+		time.Sleep(time.Duration(1000000)) //1000 000 000 == 1s
 	    }
 	}
-    }*/
+    }
 }
 
 func GenRandomInt(length int) {
-    return //tmp
 
     for {
 	if len(RndInt) < 1000 {
 	    p := random.GetSafeRandomInt(length/2)
 	    RndInt <-p
 	    
-	    time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
+	    time.Sleep(time.Duration(1000000)) //1000 000 000 == 1s
 	}
     }
 }

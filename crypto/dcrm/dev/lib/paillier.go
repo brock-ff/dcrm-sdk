@@ -22,7 +22,6 @@ import (
 	"github.com/fsn-dev/dcrm-sdk/crypto/sha3"
 	"math/big"
 	"strconv"
-	"fmt"
 )
 
 var ErrMessageTooLong = errors.New("[ERROR]: message is too long.")
@@ -44,15 +43,8 @@ type PrivateKey struct {
 func GenerateKeyPair(length int) (*PublicKey, *PrivateKey) {
 	one := big.NewInt(1)
 
-	//p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
-	//q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
-	if len(SafePrime) < 2 {
-	    return nil,nil
-	}
-
-	p := SafePrime[0] //random.GetSafeRandomPrimeInt(length / 2)
-	q := SafePrime[1] //random.GetSafeRandomPrimeInt(length / 2)
-	fmt.Println("=============GenerateKeyPair,p = %v,q =%v=================",p,q)
+	p := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
+	q := <-SafePrime //random.GetSafeRandomPrimeInt(length / 2)
 
 	if p == nil || q == nil {
 	    return nil,nil

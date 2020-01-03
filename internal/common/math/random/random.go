@@ -122,7 +122,7 @@ func GetSafeRandomInt(length int) *big.Int {
 		break
 	}
 	
-	time.Sleep(time.Duration(10000)) //1000 000 000 == 1s
+	time.Sleep(time.Duration(1000000)) //1000 000 000 == 1s
     }
 
     return rndInt
