@@ -646,7 +646,7 @@ func ECDSAGenKeyRoundFive(msgprex string,ch chan interface{},w *RpcReqWorker,u1 
     return true
 }
 
-func ECDSAGenKeyVarifyZKU(msgprex string,cointype string,ch chan interface{},w *RpcReqWorker,ids sortableIDSSlice,ug map[string][]*big.Int) bool {
+func ECDSAGenKeyVerifyZKU(msgprex string,cointype string,ch chan interface{},w *RpcReqWorker,ids sortableIDSSlice,ug map[string][]*big.Int) bool {
     if w == nil || msgprex == "" || cointype == "" || len(ids) == 0 || len(ug) == 0 {
 	res := RpcDcrmRes{Ret:"",Err:fmt.Errorf("param error")}
 	ch <- res
@@ -859,7 +859,7 @@ func KeyGenerate_ECDSA(msgprex string,ch chan interface{},id int,cointype string
     }
     fmt.Println("=================generate key,round five finish===================")
 
-    if ECDSAGenKeyVarifyZKU(msgprex,cointype,ch,w,ids,ug) != true {
+    if ECDSAGenKeyVerifyZKU(msgprex,cointype,ch,w,ids,ug) != true {
 	return false
     }
     fmt.Println("=================generate key,verify zk of u1 finish===================")
