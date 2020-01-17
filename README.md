@@ -49,7 +49,7 @@ cd dcrm-sdk && make
 ```
 ## config file
 cmd/conf.toml (bin/cmd/conf.toml)
-```
+
 ## Run
 Open access to the APIs by running the compiled code. 
 ```
@@ -122,10 +122,11 @@ curl -X POST -H "Content-Type":application/json --data '{"jsonrpc":"2.0","method
 "rsv":"FFBB398B95ED2ED308B0FE87BC254FFC2C9957742EA05C18A1411C672B74FBDF6FBD6F4915799F2B4186192581D4506039ADEB79C8EB954E779901FDB9575C8301"
 }
 ```
-## Run Local
+
+# Run Local
 The SDK can also be configured to run locally, where the user can control ownership of all nodes in the P2P network.  
 
-#### Run bootnode
+### Run bootnode
 ```
 ./bin/cmd/bootnode --genkey ./bootnode.key
 
@@ -138,7 +139,7 @@ The Default setup parameters are:
 will print bootnode which use for run node with args --bootnodes
 bootnode key such as enode://16ab118525ec559dde2640b513676b8df7368aac3a80cc5c9d9e8b9c71781c09103fe3e8b5dd17bf245f0c71b891ec4848b142852763ab2146a1e288df15da40@127.0.0.1:5550
 ```
-##### Run nodes (3 nodes at least)
+#### Run nodes (3 nodes at least)
 
 The Default setup parameters are: 
 1) nodekey: node.key
