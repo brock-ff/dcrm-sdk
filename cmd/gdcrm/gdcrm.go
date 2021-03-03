@@ -29,7 +29,7 @@ import (
 	"github.com/fsn-dev/dcrm-sdk/p2p/layer2"
 	"github.com/fsn-dev/dcrm-sdk/p2p/nat"
 	rpcdcrm "github.com/fsn-dev/dcrm-sdk/rpc/dcrm"
-	"gopkg.in/urfave/cli.v1"
+	"github.com/urfave/cli"
 	//"github.com/fusion/go-fusion/crypto/dcrm/dev"
 )
 
