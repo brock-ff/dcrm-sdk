@@ -14,4 +14,4 @@ WORKDIR /src
 COPY . .
 RUN make
 
-ENTRYPOINT [ "/src/bin/cmd/gdcrm" ]
+CMD [ "/src/bin/cmd/gdcrm", "help" ]
